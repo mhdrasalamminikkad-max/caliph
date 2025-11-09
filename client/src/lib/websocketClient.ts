@@ -81,6 +81,7 @@ function handleWebSocketMessage(message: any): void {
     case 'attendance_deleted':
       // Invalidate attendance queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['other-attendance'] });
       queryClient.invalidateQueries({ queryKey: ['summary'] });
       console.log('🔄 Attendance updated - refreshing UI');
       break;
