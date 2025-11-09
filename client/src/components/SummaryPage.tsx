@@ -14,7 +14,7 @@ interface SummaryPageProps {
 }
 
 export default function SummaryPage({ onBack }: SummaryPageProps) {
-  const [selectedTab, setSelectedTab] = useState<"daily" | "weekly" | "monthly" | "custom">("daily");
+  const [selectedTab, setSelectedTab] = useState<"daily" | "weekly" | "monthly" | "custom">("monthly");
   const [selectedDailyDate, setSelectedDailyDate] = useState(new Date().toISOString().split("T")[0]);
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
