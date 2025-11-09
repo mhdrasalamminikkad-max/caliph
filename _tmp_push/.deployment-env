@@ -1,0 +1,15 @@
+# Copy this file to .env for local development
+# Or set these as environment variables in your deployment platform
+
+# Frontend Environment Variable (Netlify)
+VITE_API_URL=
+
+# Backend Environment Variables (Render/Railway)
+NODE_ENV=production
+PORT=5000
+
+
+
+
+
+
