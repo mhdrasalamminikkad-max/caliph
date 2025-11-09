@@ -28,6 +28,7 @@ export interface IStorage {
   
   // Attendance methods
   getAttendance(date: string, prayer: string, className: string): Promise<Attendance[]>;
+  getAllAttendance(): Promise<Attendance[]>;
   getAttendanceByDateRange(startDate: string, endDate: string): Promise<Attendance[]>;
   markAttendance(attendance: InsertAttendance): Promise<Attendance>;
   getStudentAttendance(studentId: string): Promise<Attendance[]>;
@@ -312,6 +313,10 @@ export class MemStorage implements IStorage {
 
   async getAllStudents(): Promise<Student[]> {
     return Array.from(this.students.values());
+  }
+
+  async getAllAttendance(): Promise<Attendance[]> {
+    return Array.from(this.attendance.values());
   }
 
   async getAttendanceByDateRange(startDate: string, endDate: string): Promise<Attendance[]> {

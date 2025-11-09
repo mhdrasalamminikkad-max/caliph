@@ -74,16 +74,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Attendance routes
   app.get("/api/attendance", async (req, res) => {
     try {
-      const { date, prayer, className } = req.query;
-      if (!date || !prayer || !className) {
-        return res.status(400).json({ message: "Missing required parameters" });
+      const { date, prayer, className, studentId } = req.query;
+      
+      // If specific filters are provided, use them
+      if (date && prayer && className) {
+        const attendance = await storage.getAttendance(
+          date as string,
+          prayer as string,
+          className as string
+        );
+        res.json(attendance);
+      } else {
+        // Otherwise, return all attendance records (for summary page)
+        const allAttendance = await storage.getAllAttendance();
+        let filtered = allAttendance;
+        
+        // Apply optional filters
+        if (date) {
+          filtered = filtered.filter(a => a.date === date);
+        }
+        if (prayer) {
+          filtered = filtered.filter(a => a.prayer === prayer);
+        }
+        if (className) {
+          filtered = filtered.filter(a => a.className === className);
+        }
+        if (studentId) {
+          filtered = filtered.filter(a => a.studentId === studentId);
+        }
+        
+        res.json(filtered);
       }
-      const attendance = await storage.getAttendance(
-        date as string,
-        prayer as string,
-        className as string
-      );
-      res.json(attendance);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
