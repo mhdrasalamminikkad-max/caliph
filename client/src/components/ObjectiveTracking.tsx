@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { getStudentsByClass } from "@/lib/offlineApi";
+import { getStudentsByClass } from "@/lib/backendApi";
 import { getObjectives, saveObjectiveBatch, type Objective, type ObjectiveRecord } from "@/lib/objectivesApi";
-import type { Student } from "@shared/schema";
+import type { Student } from "@/lib/backendApi";
 
 interface ObjectiveTrackingProps {
   className: string;
@@ -33,15 +33,11 @@ export default function ObjectiveTracking({ className, onBack }: ObjectiveTracki
   const { data: students = [] } = useQuery<Student[]>({
     queryKey: ["students", className],
     queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchStudentsFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchStudentsFromFirestore();
-      const { getStudentsByClass } = await import("@/lib/offlineApi");
       return getStudentsByClass(className);
     },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    staleTime: 0,
   });
 
   // Select first objective by default

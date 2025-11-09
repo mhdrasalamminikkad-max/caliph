@@ -3,12 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
-import { getClasses, getStudents } from "@/lib/offlineApi";
-// TODO: Replace with backend API call when implementing new backend
-// import { fetchFromFirestore, getLocalAttendanceByDateRange } from "@/lib/hybridStorage";
-import { getLocalAttendanceByDateRange } from "@/lib/hybridStorage";
-import type { Class, Student } from "@shared/schema";
-import type { AttendanceRecord } from "@/lib/hybridStorage";
+import { getClasses, getStudents, getAttendance } from "@/lib/backendApi";
+import type { Class, Student, AttendanceRecord } from "@/lib/backendApi";
 
 interface OtherSummaryPageProps {
   onBack: () => void;
@@ -21,42 +17,32 @@ export default function OtherSummaryPage({ onBack }: OtherSummaryPageProps) {
 
   const { data: classes = [] } = useQuery<Class[]>({
     queryKey: ["classes"],
-    queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchClassesFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchClassesFromFirestore();
-      const { getClasses } = await import("@/lib/offlineApi");
-      return getClasses();
-    },
+    queryFn: getClasses,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    staleTime: 0,
   });
 
   const { data: students = [] } = useQuery<Student[]>({
     queryKey: ["students"],
-    queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchStudentsFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchStudentsFromFirestore();
-      const { getStudents } = await import("@/lib/offlineApi");
-      return getStudents();
-    },
+    queryFn: getStudents,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    staleTime: 0,
   });
 
   const { data: allAttendance = [] } = useQuery<AttendanceRecord[]>({
     queryKey: ["other-attendance", startDate, endDate],
     queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // await fetchFromFirestore(startDate, endDate);
-      return getLocalAttendanceByDateRange(startDate, endDate);
+      const records = await getAttendance();
+      return records.filter(record => {
+        const recordDate = record.date;
+        return recordDate >= startDate && recordDate <= endDate;
+      });
     },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    staleTime: 0,
   });
 
   // Filter only "Other" tracking records (those with reasons)

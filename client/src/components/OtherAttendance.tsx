@@ -3,10 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { getClasses, getStudentsByClass } from "@/lib/offlineApi";
-import { saveAttendanceBatch } from "@/lib/hybridStorage";
+import { getClasses, getStudentsByClass, saveAttendance } from "@/lib/backendApi";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import type { Class, Student } from "@shared/schema";
+import type { Class, Student, AttendanceRecord } from "@/lib/backendApi";
 
 interface OtherAttendanceProps {
   onBack: () => void;
@@ -85,32 +84,22 @@ export default function OtherAttendance({ onBack, onViewSummary }: OtherAttendan
 
   const { data: classes = [] } = useQuery<Class[]>({
     queryKey: ["classes"],
-    queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchClassesFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchClassesFromFirestore();
-      const { getClasses } = await import("@/lib/offlineApi");
-      return getClasses();
-    },
+    queryFn: getClasses,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    staleTime: 0,
   });
 
   const { data: students = [] } = useQuery<Student[]>({
     queryKey: ["students", selectedClass],
     queryFn: async () => {
       if (!selectedClass) return [];
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchStudentsFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchStudentsFromFirestore();
-      const { getStudentsByClass } = await import("@/lib/offlineApi");
       return getStudentsByClass(selectedClass);
     },
     enabled: !!selectedClass,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    staleTime: 0,
   });
 
   // Auto-select first class
@@ -176,16 +165,17 @@ export default function OtherAttendance({ onBack, onViewSummary }: OtherAttendan
         prayer: "Other",
         date: dateForApi,
         status: "present" as const,
-        reason: reasonName, // Store the reason name
+        reason: reasonName,
         timestamp: new Date().toISOString(),
-        synced: false
       }));
 
-      saveAttendanceBatch(attendanceRecords);
+      // Save each attendance record using backend API
+      await Promise.all(attendanceRecords.map(record => saveAttendance(record)));
       return presentStudents.length;
     },
     onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ["attendance"] });
+      queryClient.invalidateQueries({ queryKey: ["other-attendance"] });
       const reasonName = allReasons.find(r => r.id === selectedReason)?.name;
       toast({
         title: "✅ Saved!",
