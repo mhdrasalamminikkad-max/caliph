@@ -33,6 +33,14 @@ let backendAvailableCache: boolean | null = null;
 let lastBackendCheck = 0;
 const BACKEND_CHECK_INTERVAL = 30000; // Check every 30 seconds
 
+// Get API base URL (use window.location.origin for Replit compatibility)
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return 'http://localhost:5000';
+};
+
 // Check if backend is available
 async function isBackendAvailable(): Promise<boolean> {
   const now = Date.now();
@@ -41,7 +49,8 @@ async function isBackendAvailable(): Promise<boolean> {
   }
   
   try {
-    const response = await fetch('http://localhost:5000/api/attendance', {
+    const apiUrl = getApiBaseUrl();
+    const response = await fetch(`${apiUrl}/api/attendance`, {
       method: 'GET',
       signal: AbortSignal.timeout(1000), // Reduced to 1 second for faster response
     });
