@@ -8,6 +8,13 @@ import { useQuery } from "@tanstack/react-query";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { AttendanceRecord } from "@/lib/backendApi";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface SummaryPageProps {
   onBack: () => void;
@@ -21,6 +28,7 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [expandedPrayers, setExpandedPrayers] = useState<Set<string>>(new Set());
+  const [showPrayerSelectionDialog, setShowPrayerSelectionDialog] = useState(false);
 
   // Calculate date ranges
   const getDateRange = () => {
@@ -157,7 +165,7 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
   };
 
   // Generate All Class Summary PDF
-  const generateAllClassSummaryPDF = () => {
+  const generateAllClassSummaryPDF = (selectedPrayer?: string) => {
     const doc = new jsPDF();
     const currentDate = new Date();
     const periodLabel = selectedTab === "daily" 
@@ -168,21 +176,28 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
           ? new Date(startDate).toLocaleDateString("en-US", { month: "long", year: "numeric" })
           : `${new Date(startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${new Date(endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
     
+    // Filter prayers based on selection
+    const prayersToInclude = selectedPrayer && selectedPrayer !== "all"
+      ? prayerAbsentStudents.filter(p => p.prayer === selectedPrayer)
+      : prayerAbsentStudents;
+
     // Header
     doc.setFontSize(24);
     doc.setTextColor(0, 200, 83);
-    doc.text("ALL CLASS SUMMARY", 105, 30, { align: "center" });
+    doc.text(selectedPrayer && selectedPrayer !== "all" ? `${selectedPrayer.toUpperCase()} ABSENT STUDENTS` : "ALL CLASS SUMMARY", 105, 30, { align: "center" });
     
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
-    doc.text("Prayer-wise Absent Students", 105, 40, { align: "center" });
+    doc.text(selectedPrayer && selectedPrayer !== "all" ? "Absent Students Report" : "Prayer-wise Absent Students", 105, 40, { align: "center" });
     
     doc.setFontSize(14);
     doc.text(`Report Period: ${periodLabel}`, 105, 50, { align: "center" });
     doc.text(`Generated: ${currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, 105, 58, { align: "center" });
     
     // Summary statistics
-    const totalAbsent = allAttendance.filter(a => a.status === "absent").length;
+    const totalAbsent = selectedPrayer && selectedPrayer !== "all"
+      ? allAttendance.filter(a => a.status === "absent" && a.prayer === selectedPrayer).length
+      : allAttendance.filter(a => a.status === "absent").length;
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.text(`Total Absent Records: ${totalAbsent}`, 14, 75);
@@ -190,7 +205,7 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
     let currentY = 90;
 
     // Generate table for each prayer
-    prayerAbsentStudents.forEach((prayerData, index) => {
+    prayersToInclude.forEach((prayerData, index) => {
       // Check if we need a new page
       if (currentY > 240) {
         doc.addPage();
@@ -258,7 +273,12 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
       );
     }
 
-    doc.save(`All_Class_Summary_${periodLabel.replace(/\s/g, "_")}_${currentDate.toISOString().split("T")[0]}.pdf`);
+    const fileName = selectedPrayer && selectedPrayer !== "all"
+      ? `${selectedPrayer}_Absent_Students_${periodLabel.replace(/\s/g, "_")}_${currentDate.toISOString().split("T")[0]}.pdf`
+      : `All_Class_Summary_${periodLabel.replace(/\s/g, "_")}_${currentDate.toISOString().split("T")[0]}.pdf`;
+    
+    doc.save(fileName);
+    setShowPrayerSelectionDialog(false);
   };
 
   // Generate Comprehensive Monthly Report for Director
@@ -816,7 +836,7 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
               </span>
             </Button>
             <Button
-              onClick={generateAllClassSummaryPDF}
+              onClick={() => setShowPrayerSelectionDialog(true)}
               className="bg-white/95 hover:bg-white text-emerald-600 hover:text-emerald-700 shadow-lg font-bold rounded-xl sm:rounded-2xl px-3 sm:px-4"
               data-testid="button-all-class-summary"
             >
@@ -826,6 +846,63 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Prayer Selection Dialog */}
+      <Dialog open={showPrayerSelectionDialog} onOpenChange={setShowPrayerSelectionDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-extrabold text-emerald-600 flex items-center gap-2">
+              <span className="material-icons">mosque</span>
+              Select Prayer
+            </DialogTitle>
+            <DialogDescription>
+              Choose a specific prayer to download absent students, or select "All Prayers" to download the complete report.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-4">
+            <Button
+              onClick={() => generateAllClassSummaryPDF("all")}
+              className="w-full justify-start text-left h-auto py-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-2 border-emerald-200 hover:border-emerald-400"
+              data-testid="button-download-all-prayers"
+            >
+              <span className="material-icons mr-3 text-2xl">list_alt</span>
+              <div className="flex-1">
+                <div className="font-extrabold text-base">All Prayers</div>
+                <div className="text-xs font-semibold text-emerald-600">Download complete report with all 5 prayers</div>
+              </div>
+              <span className="material-icons text-emerald-600">download</span>
+            </Button>
+            
+            <div className="border-t pt-3">
+              <p className="text-sm font-bold text-gray-600 mb-3">Individual Prayer Reports:</p>
+              <div className="grid gap-2">
+                {prayers.map((prayer) => {
+                  const prayerData = prayerAbsentStudents.find(p => p.prayer === prayer);
+                  const absentCount = prayerData?.absentStudents.length || 0;
+                  
+                  return (
+                    <Button
+                      key={prayer}
+                      onClick={() => generateAllClassSummaryPDF(prayer)}
+                      className="w-full justify-start text-left h-auto py-3 bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200 hover:border-emerald-400"
+                      data-testid={`button-download-${prayer.toLowerCase()}`}
+                    >
+                      <span className="material-icons mr-3 text-xl text-emerald-600">mosque</span>
+                      <div className="flex-1">
+                        <div className="font-extrabold text-sm">{prayer}</div>
+                        <div className="text-xs font-semibold text-gray-500">
+                          {absentCount} {absentCount === 1 ? 'student' : 'students'} absent
+                        </div>
+                      </div>
+                      <span className="material-icons text-gray-400">download</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 relative z-10">
         <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as any)} className="w-full">
