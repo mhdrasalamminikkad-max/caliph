@@ -800,19 +800,30 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
           <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-white drop-shadow-lg flex-1 text-center px-2">
             Attendance Summary
           </h2>
-          <Button
-            onClick={generatePDF}
-            className="bg-white/95 hover:bg-white text-emerald-600 hover:text-emerald-700 shadow-lg font-bold rounded-xl sm:rounded-2xl flex-shrink-0 px-3 sm:px-4"
-          >
-            <span className="material-icons text-base sm:text-lg sm:mr-2">download</span>
-            <span className="hidden sm:inline">
-              {selectedTab === "monthly" 
-                ? "Download Monthly Report" 
-                : selectedTab === "weekly" 
-                  ? "Download Weekly Report" 
-                  : "Download PDF"}
-            </span>
-          </Button>
+          <div className="flex gap-2 flex-shrink-0">
+            <Button
+              onClick={generatePDF}
+              className="bg-white/95 hover:bg-white text-emerald-600 hover:text-emerald-700 shadow-lg font-bold rounded-xl sm:rounded-2xl px-3 sm:px-4"
+              data-testid="button-download-pdf"
+            >
+              <span className="material-icons text-base sm:text-lg sm:mr-2">download</span>
+              <span className="hidden sm:inline">
+                {selectedTab === "monthly" 
+                  ? "Download Monthly Report" 
+                  : selectedTab === "weekly" 
+                    ? "Download Weekly Report" 
+                    : "Download PDF"}
+              </span>
+            </Button>
+            <Button
+              onClick={generateAllClassSummaryPDF}
+              className="bg-white/95 hover:bg-white text-emerald-600 hover:text-emerald-700 shadow-lg font-bold rounded-xl sm:rounded-2xl px-3 sm:px-4"
+              data-testid="button-all-class-summary"
+            >
+              <span className="material-icons text-base sm:text-lg sm:mr-2">summarize</span>
+              <span className="hidden sm:inline">All Class Summary</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -954,20 +965,10 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
 
             {/* All Class Summary - Prayer-wise Absent Students */}
             <div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 sm:mb-4">
-                <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-white drop-shadow-lg flex items-center gap-2" data-testid="heading-all-class-summary">
-                  <span className="material-icons text-2xl sm:text-3xl">summarize</span>
-                  Attendance Summary
-                </h3>
-                <Button
-                  onClick={generateAllClassSummaryPDF}
-                  className="bg-white/90 hover:bg-white text-emerald-600 font-bold rounded-xl sm:rounded-2xl border-2 border-white/60 backdrop-blur-xl"
-                  data-testid="button-download-all-class-summary"
-                >
-                  <span className="material-icons mr-2 text-lg sm:text-xl">download</span>
-                  <span className="text-sm sm:text-base">All Class Summary</span>
-                </Button>
-              </div>
+              <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-white drop-shadow-lg mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-all-class-summary">
+                <span className="material-icons text-2xl sm:text-3xl">summarize</span>
+                Attendance Summary
+              </h3>
               <div className="space-y-3 sm:space-y-4">
                 {prayerAbsentStudents.map(({ prayer, absentStudents }) => (
                   <Card
