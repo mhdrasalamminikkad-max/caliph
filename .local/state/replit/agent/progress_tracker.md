@@ -6,3 +6,4 @@
 [x] 6. Add PDF download functionality for All Class Summary
 [x] 7. Move "All Class Summary" button next to main "Download PDF" button in header
 [x] 8. Add prayer selection dialog - download specific prayer or all prayers
+[x] 9. Add quick-download button on prayer dashboard (next to "Add Class") to download absent students for that specific prayer

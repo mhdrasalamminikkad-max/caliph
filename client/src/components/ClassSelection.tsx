@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { getClasses, createClass, deleteClass, getStudentsByClass } from "@/lib/offlineApi";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import type { AttendanceRecord } from "@/lib/backendApi";
 
 interface ClassSelectionProps {
   prayer: Prayer;
@@ -59,6 +62,17 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+  });
+
+  const { data: allAttendance = [] } = useQuery<AttendanceRecord[]>({
+    queryKey: ["attendance"],
+    queryFn: async () => {
+      const { getAttendance } = await import("@/lib/backendApi");
+      return getAttendance();
+    },
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0,
   });
 
 
@@ -208,6 +222,92 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
     }
   };
 
+  const downloadAbsentStudentsPDF = () => {
+    const doc = new jsPDF();
+    const currentDate = new Date();
+
+    const absentRecords = allAttendance.filter(
+      a => a.prayer === prayer && a.status === "absent"
+    );
+
+    const absentStudents = absentRecords.map(record => ({
+      name: record.studentName,
+      className: record.className,
+      date: record.date,
+      reason: record.reason
+    }));
+
+    doc.setFontSize(24);
+    doc.setTextColor(0, 200, 83);
+    doc.text(`${prayer.toUpperCase()} - ABSENT STUDENTS`, 105, 30, { align: "center" });
+
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Absent Students Report", 105, 40, { align: "center" });
+
+    doc.setFontSize(14);
+    doc.text(`Generated: ${currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, 105, 50, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Total Absent: ${absentStudents.length}`, 14, 65);
+
+    if (absentStudents.length === 0) {
+      doc.setFontSize(14);
+      doc.setTextColor(0, 150, 0);
+      doc.text("No absent students for this prayer", 105, 90, { align: "center" });
+    } else {
+      const tableData = absentStudents.map((student, idx) => [
+        (idx + 1).toString(),
+        student.name,
+        student.className,
+        new Date(student.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        student.reason || "-"
+      ]);
+
+      autoTable(doc, {
+        startY: 75,
+        head: [["#", "Student Name", "Class", "Date", "Reason"]],
+        body: tableData,
+        theme: "striped",
+        headStyles: {
+          fillColor: [220, 38, 38],
+          fontSize: 10,
+          fontStyle: "bold",
+          textColor: [255, 255, 255]
+        },
+        styles: { fontSize: 9 },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 50 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 35 },
+          4: { cellWidth: 55 },
+        },
+      });
+    }
+
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(9);
+      doc.setTextColor(128, 128, 128);
+      doc.text(
+        `Page ${i} of ${pageCount} - Caliph Attendance System`,
+        105,
+        285,
+        { align: "center" }
+      );
+    }
+
+    doc.save(`${prayer}_Absent_Students_${currentDate.toISOString().split("T")[0]}.pdf`);
+
+    toast({
+      title: "✅ PDF Downloaded",
+      description: `${prayer} absent students list downloaded successfully`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-500 via-green-400 to-teal-500 dark:from-emerald-900 dark:via-green-800 dark:to-teal-900 relative overflow-hidden">
       {/* Decorative floating elements */}
@@ -239,13 +339,23 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       <div className="max-w-6xl mx-auto p-4 sm:p-6 md:p-8 relative z-10">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8 md:mb-10">
           <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white drop-shadow-lg">Select a Class</h3>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto bg-white/95 hover:bg-white text-emerald-600 hover:text-emerald-700 shadow-[0_10px_30px_-5px_rgba(0,200,83,0.4)] hover:shadow-[0_15px_40px_-5px_rgba(0,200,83,0.5)] active:shadow-[0_8px_20px_-5px_rgba(0,200,83,0.4)] transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0 rounded-xl sm:rounded-2xl px-6 sm:px-8 py-2.5 sm:py-3 font-bold text-sm sm:text-base touch-manipulation">
-                <span className="material-icons mr-2 text-lg sm:text-xl">add</span>
-                Add Class
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              onClick={downloadAbsentStudentsPDF}
+              className="flex-1 sm:flex-initial bg-white/95 hover:bg-white text-emerald-600 hover:text-emerald-700 shadow-[0_10px_30px_-5px_rgba(0,200,83,0.4)] hover:shadow-[0_15px_40px_-5px_rgba(0,200,83,0.5)] active:shadow-[0_8px_20px_-5px_rgba(0,200,83,0.4)] transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0 rounded-xl sm:rounded-2xl px-6 sm:px-8 py-2.5 sm:py-3 font-bold text-sm sm:text-base touch-manipulation"
+              data-testid="button-download-absent-students"
+            >
+              <span className="material-icons mr-2 text-lg sm:text-xl">download</span>
+              <span className="hidden sm:inline">Absent List</span>
+              <span className="sm:hidden">Download</span>
+            </Button>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex-1 sm:flex-initial bg-white/95 hover:bg-white text-emerald-600 hover:text-emerald-700 shadow-[0_10px_30px_-5px_rgba(0,200,83,0.4)] hover:shadow-[0_15px_40px_-5px_rgba(0,200,83,0.5)] active:shadow-[0_8px_20px_-5px_rgba(0,200,83,0.4)] transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0 rounded-xl sm:rounded-2xl px-6 sm:px-8 py-2.5 sm:py-3 font-bold text-sm sm:text-base touch-manipulation">
+                  <span className="material-icons mr-2 text-lg sm:text-xl">add</span>
+                  Add Class
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Class</DialogTitle>
@@ -272,7 +382,8 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
                 </div>
               </div>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         {isLoading ? (
