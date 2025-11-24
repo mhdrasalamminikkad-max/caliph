@@ -1,24 +1,12 @@
 {
   "classes": {
-    "eeed89d5-835e-49e8-ac8b-18a13cf4eae4": {
-      "name": "ere",
-      "id": "eeed89d5-835e-49e8-ac8b-18a13cf4eae4",
-      "createdAt": "2025-11-09T04:08:04.906Z"
-    },
     "7f4575ec-8568-4a7a-a06e-3b72faa5f17f": {
       "name": "xx",
       "id": "7f4575ec-8568-4a7a-a06e-3b72faa5f17f",
       "createdAt": "2025-11-09T04:08:08.616Z"
     }
   },
-  "students": {
-    "bce3e08d-56b6-4c19-a525-d5fac614bd4d": {
-      "name": "xx",
-      "rollNumber": "2",
-      "className": "ere",
-      "id": "bce3e08d-56b6-4c19-a525-d5fac614bd4d"
-    }
-  },
+  "students": {},
   "attendance": {
     "7f1d04db-38e8-43fa-884b-a92857548d0f": {
       "studentId": "test",
@@ -30,28 +18,6 @@
       "id": "7f1d04db-38e8-43fa-884b-a92857548d0f",
       "reason": null,
       "timestamp": "2025-11-09T04:06:09.291Z"
-    },
-    "e61a55d3-849e-4be4-866b-04f7187c83e7": {
-      "studentId": "bce3e08d-56b6-4c19-a525-d5fac614bd4d",
-      "studentName": "xx",
-      "className": "ere",
-      "prayer": "Fajr",
-      "date": "2025-11-09",
-      "status": "present",
-      "id": "e61a55d3-849e-4be4-866b-04f7187c83e7",
-      "reason": null,
-      "timestamp": "2025-11-09T04:08:21.996Z"
-    },
-    "df093d22-93c1-4526-840a-793176047eb8": {
-      "studentId": "bce3e08d-56b6-4c19-a525-d5fac614bd4d",
-      "studentName": "xx",
-      "className": "ere",
-      "prayer": "Maghrib",
-      "date": "2025-11-09",
-      "status": "present",
-      "id": "df093d22-93c1-4526-840a-793176047eb8",
-      "reason": null,
-      "timestamp": "2025-11-09T04:08:43.564Z"
     }
   }
 }

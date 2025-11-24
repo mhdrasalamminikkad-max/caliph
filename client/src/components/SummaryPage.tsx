@@ -20,6 +20,7 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
   const [customEndDate, setCustomEndDate] = useState("");
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [expandedPrayers, setExpandedPrayers] = useState<Set<string>>(new Set());
 
   // Calculate date ranges
   const getDateRange = () => {
@@ -128,6 +129,32 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
     student.name.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
     student.className.toLowerCase().includes(studentSearchQuery.toLowerCase())
   );
+
+  // Calculate prayer-wise absent students for All Class Summary
+  const prayerAbsentStudents = prayers.map(prayer => {
+    const absentRecords = allAttendance.filter(
+      a => a.prayer === prayer && a.status === "absent"
+    );
+    return {
+      prayer,
+      absentStudents: absentRecords.map(record => ({
+        name: record.studentName,
+        className: record.className,
+        date: record.date,
+        reason: record.reason
+      }))
+    };
+  });
+
+  const togglePrayer = (prayer: string) => {
+    const newExpanded = new Set(expandedPrayers);
+    if (newExpanded.has(prayer)) {
+      newExpanded.delete(prayer);
+    } else {
+      newExpanded.add(prayer);
+    }
+    setExpandedPrayers(newExpanded);
+  };
 
   // Generate Comprehensive Monthly Report for Director
   const generateMonthlyDirectorReport = () => {
@@ -815,6 +842,104 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
                         {absent} absent
                       </span>
                     </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* All Class Summary - Prayer-wise Absent Students */}
+            <div>
+              <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-white drop-shadow-lg mb-3 sm:mb-4" data-testid="heading-all-class-summary">
+                All Class Summary
+              </h3>
+              <div className="space-y-3 sm:space-y-4">
+                {prayerAbsentStudents.map(({ prayer, absentStudents }) => (
+                  <Card
+                    key={prayer}
+                    className="overflow-hidden bg-white/90 backdrop-blur-2xl border-2 sm:border-4 border-white/60 rounded-2xl sm:rounded-3xl"
+                    data-testid={`card-prayer-${prayer.toLowerCase()}`}
+                  >
+                    <button
+                      onClick={() => togglePrayer(prayer)}
+                      className="w-full p-4 sm:p-6 flex items-center justify-between hover-elevate active-elevate-2 transition-all text-left"
+                      data-testid={`button-toggle-${prayer.toLowerCase()}`}
+                    >
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <span className="material-icons text-2xl sm:text-3xl text-emerald-600">mosque</span>
+                        <div>
+                          <h4 className="text-lg sm:text-xl md:text-2xl font-extrabold text-gray-900">
+                            {prayer}
+                          </h4>
+                          <p className="text-xs sm:text-sm font-semibold text-gray-600">
+                            {absentStudents.length} {absentStudents.length === 1 ? 'student' : 'students'} absent
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="bg-red-100 px-3 sm:px-4 py-2 rounded-xl">
+                          <span className="text-xl sm:text-2xl font-extrabold text-red-600">
+                            {absentStudents.length}
+                          </span>
+                        </div>
+                        <span className={`material-icons text-2xl sm:text-3xl text-gray-600 transition-transform ${expandedPrayers.has(prayer) ? 'rotate-180' : ''}`}>
+                          expand_more
+                        </span>
+                      </div>
+                    </button>
+
+                    {expandedPrayers.has(prayer) && (
+                      <div className="border-t-2 border-gray-200 bg-gray-50/50 p-4 sm:p-6">
+                        {absentStudents.length === 0 ? (
+                          <div className="text-center py-6 text-gray-500 font-semibold flex flex-col items-center gap-2">
+                            <span className="material-icons text-4xl text-emerald-500">check_circle</span>
+                            <p>No absent students for {prayer}</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 sm:space-y-3">
+                            {absentStudents.map((student, index) => (
+                              <div
+                                key={`${student.name}-${student.className}-${index}`}
+                                className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-white rounded-xl border-2 border-red-100 hover-elevate"
+                                data-testid={`item-absent-student-${index}`}
+                              >
+                                <div className="flex items-start gap-3 flex-1 mb-2 sm:mb-0">
+                                  <span className="material-icons text-red-500 text-xl sm:text-2xl">person_off</span>
+                                  <div className="flex-1">
+                                    <h5 className="text-base sm:text-lg font-extrabold text-gray-900" data-testid={`text-student-name-${index}`}>
+                                      {student.name}
+                                    </h5>
+                                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                                      <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-gray-600">
+                                        <span className="material-icons text-sm">school</span>
+                                        <span data-testid={`text-class-name-${index}`}>Class: {student.className}</span>
+                                      </span>
+                                      <span className="text-gray-400">•</span>
+                                      <span className="text-xs sm:text-sm font-semibold text-gray-500">
+                                        {new Date(student.date).toLocaleDateString("en-US", {
+                                          month: "short",
+                                          day: "numeric",
+                                          year: "numeric"
+                                        })}
+                                      </span>
+                                    </div>
+                                    {student.reason && (
+                                      <div className="mt-2 text-xs sm:text-sm font-semibold text-gray-700 italic bg-amber-50 px-3 py-1 rounded-lg inline-block">
+                                        "{student.reason}"
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 ml-8 sm:ml-0">
+                                  <span className="px-3 py-1 rounded-full font-bold text-xs sm:text-sm bg-red-100 text-red-700">
+                                    ABSENT
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </Card>
                 ))}
               </div>
