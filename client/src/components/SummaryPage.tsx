@@ -955,8 +955,9 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
             {/* All Class Summary - Prayer-wise Absent Students */}
             <div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 sm:mb-4">
-                <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-white drop-shadow-lg" data-testid="heading-all-class-summary">
-                  All Class Summary
+                <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-white drop-shadow-lg flex items-center gap-2" data-testid="heading-all-class-summary">
+                  <span className="material-icons text-2xl sm:text-3xl">summarize</span>
+                  Attendance Summary
                 </h3>
                 <Button
                   onClick={generateAllClassSummaryPDF}
@@ -964,7 +965,7 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
                   data-testid="button-download-all-class-summary"
                 >
                   <span className="material-icons mr-2 text-lg sm:text-xl">download</span>
-                  <span className="text-sm sm:text-base">Download PDF</span>
+                  <span className="text-sm sm:text-base">All Class Summary</span>
                 </Button>
               </div>
               <div className="space-y-3 sm:space-y-4">
