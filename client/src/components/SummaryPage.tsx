@@ -156,6 +156,111 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
     setExpandedPrayers(newExpanded);
   };
 
+  // Generate All Class Summary PDF
+  const generateAllClassSummaryPDF = () => {
+    const doc = new jsPDF();
+    const currentDate = new Date();
+    const periodLabel = selectedTab === "daily" 
+      ? `Daily - ${new Date(selectedDailyDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
+      : selectedTab === "weekly" 
+        ? "Weekly"
+        : selectedTab === "monthly"
+          ? new Date(startDate).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+          : `${new Date(startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${new Date(endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+    
+    // Header
+    doc.setFontSize(24);
+    doc.setTextColor(0, 200, 83);
+    doc.text("ALL CLASS SUMMARY", 105, 30, { align: "center" });
+    
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Prayer-wise Absent Students", 105, 40, { align: "center" });
+    
+    doc.setFontSize(14);
+    doc.text(`Report Period: ${periodLabel}`, 105, 50, { align: "center" });
+    doc.text(`Generated: ${currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, 105, 58, { align: "center" });
+    
+    // Summary statistics
+    const totalAbsent = allAttendance.filter(a => a.status === "absent").length;
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Total Absent Records: ${totalAbsent}`, 14, 75);
+    
+    let currentY = 90;
+
+    // Generate table for each prayer
+    prayerAbsentStudents.forEach((prayerData, index) => {
+      // Check if we need a new page
+      if (currentY > 240) {
+        doc.addPage();
+        currentY = 20;
+      }
+
+      // Prayer header
+      doc.setFontSize(16);
+      doc.setTextColor(0, 200, 83);
+      doc.text(`${prayerData.prayer} - ${prayerData.absentStudents.length} Absent`, 14, currentY);
+      currentY += 10;
+
+      if (prayerData.absentStudents.length === 0) {
+        doc.setFontSize(11);
+        doc.setTextColor(0, 150, 0);
+        doc.text("No absent students", 14, currentY);
+        currentY += 15;
+      } else {
+        // Create table data
+        const tableData = prayerData.absentStudents.map((student, idx) => [
+          (idx + 1).toString(),
+          student.name,
+          student.className,
+          new Date(student.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+          student.reason || "-"
+        ]);
+
+        autoTable(doc, {
+          startY: currentY,
+          head: [["#", "Student Name", "Class", "Date", "Reason"]],
+          body: tableData,
+          theme: "striped",
+          headStyles: { 
+            fillColor: [220, 38, 38], 
+            fontSize: 10, 
+            fontStyle: "bold",
+            textColor: [255, 255, 255]
+          },
+          styles: { fontSize: 9 },
+          columnStyles: {
+            0: { cellWidth: 10 },
+            1: { cellWidth: 45 },
+            2: { cellWidth: 30 },
+            3: { cellWidth: 35 },
+            4: { cellWidth: 60 },
+          },
+          margin: { left: 14 },
+        });
+
+        currentY = (doc as any).lastAutoTable.finalY + 15;
+      }
+    });
+
+    // Footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(9);
+      doc.setTextColor(128, 128, 128);
+      doc.text(
+        `Page ${i} of ${pageCount} - Caliph Attendance System`,
+        105,
+        285,
+        { align: "center" }
+      );
+    }
+
+    doc.save(`All_Class_Summary_${periodLabel.replace(/\s/g, "_")}_${currentDate.toISOString().split("T")[0]}.pdf`);
+  };
+
   // Generate Comprehensive Monthly Report for Director
   const generateMonthlyDirectorReport = () => {
     const doc = new jsPDF();
@@ -849,9 +954,19 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
 
             {/* All Class Summary - Prayer-wise Absent Students */}
             <div>
-              <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-white drop-shadow-lg mb-3 sm:mb-4" data-testid="heading-all-class-summary">
-                All Class Summary
-              </h3>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-white drop-shadow-lg" data-testid="heading-all-class-summary">
+                  All Class Summary
+                </h3>
+                <Button
+                  onClick={generateAllClassSummaryPDF}
+                  className="bg-white/90 hover:bg-white text-emerald-600 font-bold rounded-xl sm:rounded-2xl border-2 border-white/60 backdrop-blur-xl"
+                  data-testid="button-download-all-class-summary"
+                >
+                  <span className="material-icons mr-2 text-lg sm:text-xl">download</span>
+                  <span className="text-sm sm:text-base">Download PDF</span>
+                </Button>
+              </div>
               <div className="space-y-3 sm:space-y-4">
                 {prayerAbsentStudents.map(({ prayer, absentStudents }) => (
                   <Card
