@@ -110,6 +110,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk student import (admin only)
+  app.post("/api/students/bulk", requireAdmin, async (req, res) => {
+    try {
+      const { students } = req.body;
+      
+      if (!Array.isArray(students) || students.length === 0) {
+        return res.status(400).json({ message: "Invalid request: students array is required" });
+      }
+
+      const createdStudents = [];
+      const errors = [];
+
+      for (const studentData of students) {
+        try {
+          const validatedData = insertStudentSchema.parse(studentData);
+          const newStudent = await storage.createStudent(validatedData);
+          createdStudents.push(newStudent);
+        } catch (error: any) {
+          errors.push({
+            student: studentData.name || "Unknown",
+            error: error.message,
+          });
+        }
+      }
+
+      res.status(201).json({
+        created: createdStudents.length,
+        failed: errors.length,
+        students: createdStudents,
+        errors: errors.length > 0 ? errors : undefined,
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Attendance routes
   app.get("/api/attendance", async (req, res) => {
     try {
