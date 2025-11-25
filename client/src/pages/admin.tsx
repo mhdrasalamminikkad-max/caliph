@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, GraduationCap, School, Calendar, Shield } from "lucide-react";
+import { Users, GraduationCap, School, Calendar, Shield, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UserManagement from "@/components/admin/UserManagement";
 import StudentManagement from "@/components/admin/StudentManagement";
 import ClassManagement from "@/components/admin/ClassManagement";
 import AttendanceEditor from "@/components/admin/AttendanceEditor";
 import BackdatedAttendance from "@/components/admin/BackdatedAttendance";
+import ClearAttendanceData from "@/components/admin/ClearAttendanceData";
 
 interface AdminPanelProps {
   onExit?: () => void;
@@ -47,7 +48,7 @@ export default function AdminPanel({ onExit }: AdminPanelProps) {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5" data-testid="tabs-admin-navigation">
+          <TabsList className="grid w-full grid-cols-6" data-testid="tabs-admin-navigation">
             <TabsTrigger value="users" data-testid="tab-users">
               <Users className="w-4 h-4 mr-2" />
               Users
@@ -67,6 +68,10 @@ export default function AdminPanel({ onExit }: AdminPanelProps) {
             <TabsTrigger value="backdated-attendance" data-testid="tab-backdated-attendance">
               <Calendar className="w-4 h-4 mr-2" />
               Add Past Attendance
+            </TabsTrigger>
+            <TabsTrigger value="clear-data" data-testid="tab-clear-data">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Clear Attendance
             </TabsTrigger>
           </TabsList>
 
@@ -88,6 +93,10 @@ export default function AdminPanel({ onExit }: AdminPanelProps) {
 
           <TabsContent value="backdated-attendance" className="space-y-4">
             <BackdatedAttendance />
+          </TabsContent>
+
+          <TabsContent value="clear-data" className="space-y-4">
+            <ClearAttendanceData />
           </TabsContent>
         </Tabs>
       </div>

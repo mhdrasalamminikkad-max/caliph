@@ -2,9 +2,7 @@ import { Prayer, prayers } from "@shared/schema";
 import PrayerButton from "./PrayerButton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { removeDuplicateStudents, clearAllData } from "@/lib/offlineApi";
-// TODO: Replace with backend API call when implementing new backend
-// import { forceSyncAllData } from "@/lib/firebaseSync";
+import { removeDuplicateStudents } from "@/lib/offlineApi";
 import { useState } from "react";
 import { queryClient } from "@/lib/queryClient";
 
@@ -199,64 +197,6 @@ export default function HomePage({ onPrayerSelect, onObjectivesClick }: HomePage
             {isProcessing ? "Cleaning..." : "Clean Duplicates"}
           </Button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={async () => {
-              if (isProcessing) return;
-              
-              // Double confirmation before clearing all data
-              const confirm1 = window.confirm("⚠️ WARNING: This will delete ALL local data!\n\nThis includes:\n• All classes\n• All students\n• All attendance records\n• All custom reasons\n\nThis cannot be undone!\n\nClick OK to continue, or Cancel to abort.");
-              
-              if (!confirm1) {
-                return;
-              }
-              
-              const confirm2 = window.confirm("⚠️ LAST CHANCE!\n\nAre you ABSOLUTELY SURE you want to delete ALL local storage data?\n\nThis action is IRREVERSIBLE!");
-              
-              if (!confirm2) {
-                return;
-              }
-              
-              setIsProcessing(true);
-              
-              try {
-                clearAllData();
-                
-                // Invalidate all queries to refresh UI
-                queryClient.invalidateQueries({ queryKey: ["classes"] });
-                queryClient.invalidateQueries({ queryKey: ["students"] });
-                queryClient.invalidateQueries({ queryKey: ["class-students"] });
-                queryClient.invalidateQueries({ queryKey: ["attendance"] });
-                queryClient.invalidateQueries({ queryKey: ["other-attendance"] });
-                
-                toast({
-                  title: "✅ All Data Cleared",
-                  description: "All local storage has been cleared. Refresh the page to see the changes.",
-                });
-                
-                // Refresh page after 2 seconds
-                setTimeout(() => {
-                  window.location.reload();
-                }, 2000);
-              } catch (error) {
-                toast({
-                  title: "Error",
-                  description: "Failed to clear data. Please try again.",
-                  variant: "destructive",
-                });
-              } finally {
-                setIsProcessing(false);
-              }
-            }}
-            disabled={isProcessing}
-            className="text-white/80 hover:text-white hover:bg-red-500/30 text-xs"
-          >
-            <span className="material-icons text-sm mr-1">
-              {isProcessing ? "delete" : "delete_forever"}
-            </span>
-            {isProcessing ? "Clearing..." : "Clear All Storage"}
-          </Button>
         </div>
       </div>
     </div>

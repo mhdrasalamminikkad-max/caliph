@@ -37,6 +37,7 @@ export interface IStorage {
   getStudentAttendance(studentId: string): Promise<Attendance[]>;
   updateAttendance(id: string, data: Partial<InsertAttendance>): Promise<Attendance | undefined>;
   deleteAttendance(id: string): Promise<boolean>;
+  clearAllAttendance(): Promise<number>;
   
   // User methods
   getUsers(): Promise<User[]>;
@@ -414,6 +415,14 @@ export class MemStorage implements IStorage {
       broadcastAttendanceDelete(id);
     }
     return deleted;
+  }
+
+  async clearAllAttendance(): Promise<number> {
+    const count = this.attendance.size;
+    this.attendance.clear();
+    this.saveData();
+    console.log(`✅ Cleared ${count} attendance records`);
+    return count;
   }
 
   // User methods
