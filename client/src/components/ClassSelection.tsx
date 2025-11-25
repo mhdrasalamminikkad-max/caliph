@@ -290,89 +290,51 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
     );
 
     // Group absent students by class
-    const studentsByClass: Record<string, Array<{ name: string; reason?: string }>> = {};
+    const studentsByClass: Record<string, string[]> = {};
     absentRecords.forEach(record => {
       if (!studentsByClass[record.className]) {
         studentsByClass[record.className] = [];
       }
-      studentsByClass[record.className].push({
-        name: record.studentName,
-        reason: record.reason || undefined
-      });
+      studentsByClass[record.className].push(record.studentName);
     });
 
     // Sort class names alphabetically
     const sortedClasses = Object.keys(studentsByClass).sort();
 
-    // Title
-    doc.setFontSize(20);
-    doc.setTextColor(0, 200, 83);
-    doc.text(`${prayer.toUpperCase()} - ABSENT STUDENTS`, 105, 20, { align: "center" });
+    // Starting Y position
+    let yPosition = 20;
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
 
-    doc.setFontSize(12);
-    doc.setTextColor(100, 100, 100);
-    doc.text(currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }), 105, 28, { align: "center" });
+    // Loop through each class
+    sortedClasses.forEach((className) => {
+      const students = studentsByClass[className];
 
-    // Starting Y position for content
-    let yPosition = 45;
+      // Check if we need a new page
+      if (yPosition > 270) {
+        doc.addPage();
+        yPosition = 20;
+      }
 
-    if (sortedClasses.length === 0) {
-      doc.setFontSize(14);
-      doc.setTextColor(0, 150, 0);
-      doc.text("✓ No absent students for this prayer", 105, yPosition, { align: "center" });
-    } else {
-      // Loop through each class
-      sortedClasses.forEach((className, classIndex) => {
-        const students = studentsByClass[className];
+      // Class name
+      doc.text(className, 20, yPosition);
+      yPosition += 7;
 
+      // Student names
+      students.forEach((studentName) => {
         // Check if we need a new page
-        if (yPosition > 250) {
+        if (yPosition > 270) {
           doc.addPage();
           yPosition = 20;
         }
-
-        // Class name (bold and larger)
-        doc.setFontSize(14);
-        doc.setTextColor(0, 0, 0);
-        doc.setFont("helvetica", "bold");
-        doc.text(className, 20, yPosition);
-        yPosition += 8;
-
-        // Student names
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(60, 60, 60);
-
-        students.forEach((student, studentIndex) => {
-          // Check if we need a new page
-          if (yPosition > 270) {
-            doc.addPage();
-            yPosition = 20;
-          }
-
-          const studentText = `  ${studentIndex + 1}. ${student.name}${student.reason ? ` - ${student.reason}` : ''}`;
-          doc.text(studentText, 25, yPosition);
-          yPosition += 6;
-        });
-
-        // Add spacing between classes
-        yPosition += 5;
+        doc.text(studentName, 25, yPosition);
+        yPosition += 6;
       });
-    }
 
-    // Footer with page numbers
-    const pageCount = (doc as any).internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(9);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Page ${i} of ${pageCount} | Caliph Attendance System`,
-        105,
-        285,
-        { align: "center" }
-      );
-    }
+      // Add spacing between classes
+      yPosition += 3;
+    });
 
     doc.save(`${prayer}_Absent_Students_${currentDate.toISOString().split("T")[0]}.pdf`);
 
