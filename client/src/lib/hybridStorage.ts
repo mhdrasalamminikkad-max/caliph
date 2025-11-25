@@ -65,7 +65,7 @@ async function isBackendAvailable(): Promise<boolean> {
 }
 
 /**
- * Save attendance record to backend API
+ * Save attendance record - INSTANT with LocalStorage, background sync to backend
  */
 export async function saveAttendanceLocal(record: AttendanceRecord): Promise<void> {
   try {
@@ -75,19 +75,9 @@ export async function saveAttendanceLocal(record: AttendanceRecord): Promise<voi
       timestamp: record.timestamp || new Date().toISOString(),
     };
     
-    // Try to save to backend first
-    if (await isBackendAvailable()) {
-      try {
-        await backendApi.saveAttendance(recordWithTimestamp);
-        console.log(`✅ Attendance saved to backend: ${record.studentName} - ${record.prayer}`);
-        return;
-      } catch (error) {
-        console.warn('⚠️ Backend save failed, using LocalStorage fallback:', error);
-      }
-    }
-    
-    // Fallback to LocalStorage if backend unavailable
-    const existingRecords = await getLocalAttendance();
+    // INSTANT save to LocalStorage FIRST (no waiting for backend)
+    const storedData = localStorage.getItem(STORAGE_KEY);
+    const existingRecords: AttendanceRecord[] = storedData ? JSON.parse(storedData) : [];
     const recordIndex = existingRecords.findIndex(
       r => r.id === record.id || 
       (r.studentId === record.studentId && r.date === record.date && r.prayer === record.prayer)
@@ -100,7 +90,11 @@ export async function saveAttendanceLocal(record: AttendanceRecord): Promise<voi
     }
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existingRecords));
-    console.log(`✅ Attendance saved to LocalStorage: ${record.studentName} - ${record.prayer}`);
+    
+    // Background sync to backend (fire and forget - don't wait)
+    backendApi.saveAttendance(recordWithTimestamp).catch(() => {
+      // Silent fail - LocalStorage is source of truth
+    });
   } catch (error) {
     console.error("❌ Error saving attendance:", error);
     throw error;
@@ -108,31 +102,15 @@ export async function saveAttendanceLocal(record: AttendanceRecord): Promise<voi
 }
 
 /**
- * Batch save multiple attendance records
+ * Batch save multiple attendance records - INSTANT with LocalStorage, background sync to backend
  */
 export async function saveAttendanceBatch(records: AttendanceRecord[]): Promise<void> {
   if (records.length === 0) return;
   
   try {
-    // Try to save all to backend first
-    if (await isBackendAvailable()) {
-      try {
-        await Promise.all(records.map(record => {
-          const recordWithTimestamp = {
-            ...record,
-            timestamp: record.timestamp || new Date().toISOString(),
-          };
-          return backendApi.saveAttendance(recordWithTimestamp);
-        }));
-        console.log(`✅ Batch saved ${records.length} attendance records to backend`);
-        return;
-      } catch (error) {
-        console.warn('⚠️ Backend batch save failed, using LocalStorage fallback:', error);
-      }
-    }
-    
-    // Fallback to LocalStorage
-    const existingRecords = await getLocalAttendance();
+    // INSTANT save to LocalStorage FIRST (no waiting)
+    const storedData = localStorage.getItem(STORAGE_KEY);
+    const existingRecords: AttendanceRecord[] = storedData ? JSON.parse(storedData) : [];
     const existingMap = new Map(
       existingRecords.map(r => [`${r.studentId}-${r.date}-${r.prayer}`, r])
     );
@@ -148,7 +126,17 @@ export async function saveAttendanceBatch(records: AttendanceRecord[]): Promise<
     
     const updatedRecords = Array.from(existingMap.values());
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedRecords));
-    console.log(`✅ Batch saved ${records.length} attendance records to LocalStorage`);
+    
+    // Background sync to backend (fire and forget - don't wait)
+    Promise.all(records.map(record => {
+      const recordWithTimestamp = {
+        ...record,
+        timestamp: record.timestamp || new Date().toISOString(),
+      };
+      return backendApi.saveAttendance(recordWithTimestamp);
+    })).catch(() => {
+      // Silent fail - LocalStorage is source of truth
+    });
   } catch (error) {
     console.error("❌ Error batch saving attendance:", error);
     throw error;
@@ -156,30 +144,11 @@ export async function saveAttendanceBatch(records: AttendanceRecord[]): Promise<
 }
 
 /**
- * Get all attendance records from backend or LocalStorage
+ * Get all attendance records - INSTANT from LocalStorage (no backend wait)
  */
 export async function getLocalAttendance(): Promise<AttendanceRecord[]> {
   try {
-    // Try to get from backend first
-    if (await isBackendAvailable()) {
-      try {
-        const records = await backendApi.getAttendance();
-        console.log(`✅ Loaded ${records.length} attendance records from backend`);
-        // Ensure all records have timestamps
-        return records.map(r => ({
-          ...r,
-          timestamp: r.timestamp || new Date().toISOString()
-        }));
-      } catch (error) {
-        console.warn('⚠️ Backend fetch failed, using LocalStorage fallback:', error);
-      }
-    }
-  } catch (error) {
-    console.warn('⚠️ Backend unavailable, using LocalStorage fallback');
-  }
-  
-  // Fallback to LocalStorage
-  try {
+    // INSTANT read from LocalStorage (no backend check)
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return [];
     
@@ -206,29 +175,9 @@ export async function getLocalAttendance(): Promise<AttendanceRecord[]> {
 }
 
 /**
- * Get attendance by date range
+ * Get attendance by date range - INSTANT from LocalStorage
  */
 export async function getLocalAttendanceByDateRange(startDate: string, endDate: string): Promise<AttendanceRecord[]> {
-  try {
-    if (await isBackendAvailable()) {
-      try {
-        const allRecords = await backendApi.getAttendance();
-        return allRecords
-          .map(r => ({
-            ...r,
-            timestamp: r.timestamp || new Date().toISOString()
-          }))
-          .filter(record => {
-            return record.date >= startDate && record.date <= endDate;
-          });
-      } catch (error) {
-        console.warn('⚠️ Backend fetch failed, using LocalStorage fallback:', error);
-      }
-    }
-  } catch (error) {
-    // Continue to LocalStorage fallback
-  }
-  
   const allRecords = await getLocalAttendance();
   return allRecords.filter(record => {
     return record.date >= startDate && record.date <= endDate;
@@ -236,53 +185,21 @@ export async function getLocalAttendanceByDateRange(startDate: string, endDate: 
 }
 
 /**
- * Get attendance for a specific student
+ * Get attendance for a specific student - INSTANT from LocalStorage
  */
 export async function getLocalStudentAttendance(studentId: string): Promise<AttendanceRecord[]> {
-  try {
-    if (await isBackendAvailable()) {
-      try {
-        const records = await backendApi.getAttendance({ studentId });
-        return records.map(r => ({
-          ...r,
-          timestamp: r.timestamp || new Date().toISOString()
-        }));
-      } catch (error) {
-        console.warn('⚠️ Backend fetch failed, using LocalStorage fallback:', error);
-      }
-    }
-  } catch (error) {
-    // Continue to LocalStorage fallback
-  }
-  
   const allRecords = await getLocalAttendance();
   return allRecords.filter(record => record.studentId === studentId);
 }
 
 /**
- * Get attendance by filters (date, className, prayer)
+ * Get attendance by filters (date, className, prayer) - INSTANT from LocalStorage
  */
 export async function getLocalAttendanceByFilters(filters: {
   date?: string;
   className?: string;
   prayer?: string;
 }): Promise<AttendanceRecord[]> {
-  try {
-    if (await isBackendAvailable()) {
-      try {
-        const records = await backendApi.getAttendance(filters);
-        return records.map(r => ({
-          ...r,
-          timestamp: r.timestamp || new Date().toISOString()
-        }));
-      } catch (error) {
-        console.warn('⚠️ Backend fetch failed, using LocalStorage fallback:', error);
-      }
-    }
-  } catch (error) {
-    // Continue to LocalStorage fallback
-  }
-  
   const allRecords = await getLocalAttendance();
   return allRecords.filter(record => {
     if (filters.date && record.date !== filters.date) return false;

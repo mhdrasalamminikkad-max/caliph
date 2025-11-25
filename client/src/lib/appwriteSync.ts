@@ -151,8 +151,7 @@ export async function syncClassesToFirestore(): Promise<void> {
           });
         });
         
-        // Much longer delay between requests to avoid rate limits - ensure success
-        await delay(2000); // 2 seconds between classes
+        // NO DELAY - instant sync
         } catch (error: any) {
           const isRateLimited = 
             error.code === 429 || 
@@ -256,15 +255,14 @@ export async function syncStudentsToFirestore(): Promise<void> {
       throw new Error("Max retries exceeded");
     };
 
-    // Sync students with rate limiting - VERY slow to avoid 429 errors
-    const batchSize = 2; // Very small batches (2 students at a time)
-    const delayBetweenRequests = 1000; // 1 second delay between each request
-    const delayBetweenBatches = 5000; // 5 seconds delay between batches (much longer wait)
+    // Sync students INSTANTLY in parallel
+    const batchSize = 20; // Larger batches for faster sync
     
     for (let i = 0; i < students.length; i += batchSize) {
       const batch = students.slice(i, i + batchSize);
       
-      for (const student of batch) {
+      // Process batch in parallel (no delay)
+      await Promise.allSettled(batch.map(async (student) => {
         try {
           if (!databases) throw new Error("Databases not available");
           
@@ -334,32 +332,13 @@ export async function syncStudentsToFirestore(): Promise<void> {
             });
           });
           
-          // Small delay between requests to avoid rate limits
-          await delay(delayBetweenRequests);
+          // NO DELAY - instant sync
         } catch (error: any) {
-          const isRateLimited = 
-            error.code === 429 || 
-            error.response?.code === 429 ||
-            error.message?.includes('rate limit') ||
-            error.message?.includes('Rate limit') ||
-            error.type === 'general_rate_limit_exceeded';
-          
-          // Silently skip rate-limited items - they'll be retried later
-          // Only log occasionally to avoid spam (every 10th error)
-          const shouldLog = Math.random() < 0.1; // 10% chance to log
-          if (shouldLog && !isRateLimited && !error.message?.includes('Max retries exceeded')) {
-            console.warn(`⚠️ Some students skipped - will retry later`);
-          }
-          // Don't throw - continue with other students
+          // Silent fail - will retry later if needed
         }
-      }
-
-      console.log(`   Progress: ${Math.min(i + batchSize, students.length)}/${students.length} students`);
+      }));
       
-      // Delay between batches to avoid rate limits
-      if (i + batchSize < students.length) {
-        await delay(delayBetweenBatches);
-      }
+      // NO DELAY between batches - instant sync
     }
 
     console.log(`✅ Synced ${students.length} student(s) to Appwrite`);
