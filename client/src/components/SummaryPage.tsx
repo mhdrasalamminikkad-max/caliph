@@ -138,10 +138,14 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
     student.className.toLowerCase().includes(studentSearchQuery.toLowerCase())
   );
 
-  // Calculate prayer-wise absent students for All Class Summary
+  // Calculate prayer-wise absent students for All Class Summary (TODAY ONLY)
+  const todayDate = new Date().toISOString().split("T")[0];
   const prayerAbsentStudents = prayers.map(prayer => {
     const absentRecords = allAttendance.filter(
-      a => a.prayer === prayer && a.status === "absent"
+      a => {
+        const recordDate = new Date(a.date).toISOString().split("T")[0];
+        return a.prayer === prayer && a.status === "absent" && recordDate === todayDate;
+      }
     );
     return {
       prayer,
@@ -168,13 +172,7 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
   const generateAllClassSummaryPDF = (selectedPrayer?: string) => {
     const doc = new jsPDF();
     const currentDate = new Date();
-    const periodLabel = selectedTab === "daily" 
-      ? `Daily - ${new Date(selectedDailyDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
-      : selectedTab === "weekly" 
-        ? "Weekly"
-        : selectedTab === "monthly"
-          ? new Date(startDate).toLocaleDateString("en-US", { month: "long", year: "numeric" })
-          : `${new Date(startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${new Date(endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+    const todayDateFormatted = currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
     
     // Filter prayers based on selection
     const prayersToInclude = selectedPrayer && selectedPrayer !== "all"
@@ -184,23 +182,21 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
     // Header
     doc.setFontSize(24);
     doc.setTextColor(0, 200, 83);
-    doc.text(selectedPrayer && selectedPrayer !== "all" ? `${selectedPrayer.toUpperCase()} ABSENT STUDENTS` : "ALL CLASS SUMMARY", 105, 30, { align: "center" });
+    doc.text(selectedPrayer && selectedPrayer !== "all" ? `${selectedPrayer.toUpperCase()} ABSENT STUDENTS` : "TODAY'S ABSENT STUDENTS", 105, 30, { align: "center" });
     
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
-    doc.text(selectedPrayer && selectedPrayer !== "all" ? "Absent Students Report" : "Prayer-wise Absent Students", 105, 40, { align: "center" });
+    doc.text(selectedPrayer && selectedPrayer !== "all" ? "Daily Absent Students Report" : "Prayer-wise Daily Report", 105, 40, { align: "center" });
     
     doc.setFontSize(14);
-    doc.text(`Report Period: ${periodLabel}`, 105, 50, { align: "center" });
-    doc.text(`Generated: ${currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, 105, 58, { align: "center" });
+    doc.text(`Report Date: ${todayDateFormatted}`, 105, 50, { align: "center" });
+    doc.text(`Generated: ${todayDateFormatted}`, 105, 58, { align: "center" });
     
-    // Summary statistics
-    const totalAbsent = selectedPrayer && selectedPrayer !== "all"
-      ? allAttendance.filter(a => a.status === "absent" && a.prayer === selectedPrayer).length
-      : allAttendance.filter(a => a.status === "absent").length;
+    // Summary statistics (count only today's absences)
+    const totalAbsentToday = prayersToInclude.reduce((sum, p) => sum + p.absentStudents.length, 0);
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Total Absent Records: ${totalAbsent}`, 14, 75);
+    doc.text(`Total Absent Today: ${totalAbsentToday}`, 14, 75);
     
     let currentY = 90;
 
@@ -273,9 +269,10 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
       );
     }
 
+    const todayDateString = currentDate.toISOString().split("T")[0];
     const fileName = selectedPrayer && selectedPrayer !== "all"
-      ? `${selectedPrayer}_Absent_Students_${periodLabel.replace(/\s/g, "_")}_${currentDate.toISOString().split("T")[0]}.pdf`
-      : `All_Class_Summary_${periodLabel.replace(/\s/g, "_")}_${currentDate.toISOString().split("T")[0]}.pdf`;
+      ? `${selectedPrayer}_Absent_Students_Daily_${todayDateString}.pdf`
+      : `Todays_Absent_Students_${todayDateString}.pdf`;
     
     doc.save(fileName);
     setShowPrayerSelectionDialog(false);
