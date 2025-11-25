@@ -36,3 +36,6 @@
 [x] 36. Create BulkStudentImport component with file upload, parsing, and preview - COMPLETE
 [x] 37. Add bulk API endpoint (POST /api/students/bulk) with requireAdmin middleware - COMPLETE
 [x] 38. Integrate bulk import into StudentManagement with tabs (Individual/Bulk Import) - COMPLETE
+[x] 39. Change PDF format in ClassSelection to show class-grouped format - COMPLETE
+[x] 40. Modify downloadAbsentStudentsPDF to group by class and list student names below - COMPLETE
+[x] 41. Fix TypeScript errors: await createClass, handle null reason field - COMPLETE

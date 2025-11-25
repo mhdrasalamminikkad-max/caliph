@@ -21,6 +21,27 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 25, 2025)
 
+### PDF Format Update (Class Selection)
+- **Modified**: PDF download button in Class Selection now shows class-grouped format
+- **Format**: Class name in bold at top, followed by numbered list of absent student names
+- **Features**: 
+  - Groups absent students by class name (alphabetically sorted)
+  - Includes absence reasons when available
+  - Automatic pagination for multi-page reports
+  - Clean, simple format for easy reading
+- **Location**: ClassSelection component, downloadAbsentStudentsPDF function
+
+### Bulk Student Import Feature
+- **Added**: Excel bulk import functionality in admin panel
+- **Features**:
+  - Download Excel template with correct format
+  - Optional default class selection for all students
+  - File validation and preview before importing
+  - Batch creation with error handling
+  - Admin-only access with requireAdmin middleware
+- **Components**: BulkStudentImport.tsx integrated into StudentManagement tabs
+- **Endpoint**: POST /api/students/bulk (protected)
+
 ### Clear Attendance Data Feature
 - **Removed**: "Clear All Storage" button from home screen to prevent accidental data loss
 - **Added**: New "Clear Attendance" tab (6th tab) in admin panel
