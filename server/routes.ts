@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertClassSchema, insertStudentSchema, insertAttendanceSchema } from "@shared/schema";
+import { insertClassSchema, insertStudentSchema, insertAttendanceSchema, insertUserSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Class routes
@@ -53,6 +53,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const studentData = insertStudentSchema.parse(req.body);
       const newStudent = await storage.createStudent(studentData);
       res.status(201).json(newStudent);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/students/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const studentData = insertStudentSchema.partial().parse(req.body);
+      const updatedStudent = await storage.updateStudent(id, studentData);
+      if (!updatedStudent) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      res.json(updatedStudent);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
@@ -120,6 +134,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/attendance/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const attendanceData = insertAttendanceSchema.partial().parse(req.body);
+      const updatedAttendance = await storage.updateAttendance(id, attendanceData);
+      if (!updatedAttendance) {
+        return res.status(404).json({ message: "Attendance record not found" });
+      }
+      res.json(updatedAttendance);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/attendance/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteAttendance(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Attendance record not found" });
+      }
+      res.json({ message: "Attendance deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Get attendance by date range
   app.get("/api/attendance/range", async (req, res) => {
     try {
@@ -167,6 +208,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(attendance);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // User routes
+  app.get("/api/users", async (_req, res) => {
+    try {
+      const users = await storage.getUsers();
+      res.json(users);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/users", async (req, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      const newUser = await storage.createUser(userData);
+      res.status(201).json(newUser);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/users/:id/role", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { role } = req.body;
+      if (!role || (role !== "admin" && role !== "teacher")) {
+        return res.status(400).json({ message: "Invalid role. Must be 'admin' or 'teacher'" });
+      }
+      const updatedUser = await storage.updateUserRole(id, role);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(updatedUser);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteUser(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ message: "User deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
     }
   });
 

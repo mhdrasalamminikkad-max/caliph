@@ -28,6 +28,14 @@ export const attendance = pgTable("attendance", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  role: text("role").notNull().default("teacher"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertClassSchema = createInsertSchema(classes).omit({
   id: true,
   createdAt: true,
@@ -42,12 +50,21 @@ export const insertAttendanceSchema = createInsertSchema(attendance).omit({
   timestamp: true,
 });
 
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertClass = z.infer<typeof insertClassSchema>;
 export type Class = typeof classes.$inferSelect;
 export type InsertStudent = z.infer<typeof insertStudentSchema>;
 export type Student = typeof students.$inferSelect;
 export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
 export type Attendance = typeof attendance.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
 
 export const prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"] as const;
 export type Prayer = typeof prayers[number];
+export const roles = ["admin", "teacher"] as const;
+export type Role = typeof roles[number];

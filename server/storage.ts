@@ -1,4 +1,4 @@
-import { type Student, type InsertStudent, type Attendance, type InsertAttendance, type Class, type InsertClass } from "@shared/schema";
+import { type Student, type InsertStudent, type Attendance, type InsertAttendance, type Class, type InsertClass, type User, type InsertUser } from "@shared/schema";
 import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
@@ -10,6 +10,7 @@ interface StorageData {
   classes: Record<string, Class>;
   students: Record<string, Student>;
   attendance: Record<string, Attendance>;
+  users: Record<string, User>;
 }
 
 export interface IStorage {
@@ -24,6 +25,7 @@ export interface IStorage {
   getAllStudents(): Promise<Student[]>;
   getStudentsByClass(className: string): Promise<Student[]>;
   createStudent(student: InsertStudent): Promise<Student>;
+  updateStudent(id: string, data: Partial<InsertStudent>): Promise<Student | undefined>;
   deleteStudent(id: string): Promise<boolean>;
   
   // Attendance methods
@@ -32,17 +34,29 @@ export interface IStorage {
   getAttendanceByDateRange(startDate: string, endDate: string): Promise<Attendance[]>;
   markAttendance(attendance: InsertAttendance): Promise<Attendance>;
   getStudentAttendance(studentId: string): Promise<Attendance[]>;
+  updateAttendance(id: string, data: Partial<InsertAttendance>): Promise<Attendance | undefined>;
+  deleteAttendance(id: string): Promise<boolean>;
+  
+  // User methods
+  getUsers(): Promise<User[]>;
+  getUser(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUserRole(id: string, role: string): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private classes: Map<string, Class>;
   private students: Map<string, Student>;
   private attendance: Map<string, Attendance>;
+  private users: Map<string, User>;
 
   constructor() {
     this.classes = new Map();
     this.students = new Map();
     this.attendance = new Map();
+    this.users = new Map();
     this.loadData();
   }
 
@@ -71,6 +85,7 @@ export class MemStorage implements IStorage {
         // Convert objects back to Maps with validation
         this.classes = new Map(Object.entries(data.classes || {}));
         this.students = new Map(Object.entries(data.students || {}));
+        this.users = new Map(Object.entries(data.users || {}));
         
         // Convert timestamp strings back to Date objects
         const attendanceEntries = Object.entries(data.attendance || {}).map(([id, att]) => [
@@ -79,7 +94,13 @@ export class MemStorage implements IStorage {
         ]);
         this.attendance = new Map(attendanceEntries as [string, Attendance][]);
         
-        console.log(`✅ Loaded ${this.classes.size} classes, ${this.students.size} students, ${this.attendance.size} attendance records`);
+        const userEntries = Object.entries(data.users || {}).map(([id, user]) => [
+          id,
+          { ...user, createdAt: user.createdAt ? new Date(user.createdAt) : new Date() }
+        ]);
+        this.users = new Map(userEntries as [string, User][]);
+        
+        console.log(`✅ Loaded ${this.classes.size} classes, ${this.students.size} students, ${this.attendance.size} attendance records, ${this.users.size} users`);
       } else {
         console.log("No data file found, starting with empty data");
         this.initializeEmptyData();
@@ -95,6 +116,7 @@ export class MemStorage implements IStorage {
     this.classes = new Map();
     this.students = new Map();
     this.attendance = new Map();
+    this.users = new Map();
     // Save empty structure
     this.saveData();
   }
@@ -111,6 +133,7 @@ export class MemStorage implements IStorage {
         classes: Object.fromEntries(this.classes),
         students: Object.fromEntries(this.students),
         attendance: Object.fromEntries(this.attendance),
+        users: Object.fromEntries(this.users),
       };
       
       // Write to temporary file first, then rename (atomic operation)
@@ -327,6 +350,102 @@ export class MemStorage implements IStorage {
       const attDate = new Date(att.date);
       return attDate >= start && attDate <= end;
     });
+  }
+
+  async updateStudent(id: string, data: Partial<InsertStudent>): Promise<Student | undefined> {
+    const student = this.students.get(id);
+    if (!student) return undefined;
+
+    const updatedStudent: Student = {
+      ...student,
+      ...data,
+    };
+
+    this.students.set(id, updatedStudent);
+    this.saveData();
+    broadcastStudentUpdate(updatedStudent);
+    return updatedStudent;
+  }
+
+  async updateAttendance(id: string, data: Partial<InsertAttendance>): Promise<Attendance | undefined> {
+    const attendance = this.attendance.get(id);
+    if (!attendance) return undefined;
+
+    const updatedAttendance: Attendance = {
+      ...attendance,
+      ...data,
+      id,
+      timestamp: new Date(),
+    };
+
+    this.attendance.set(id, updatedAttendance);
+    this.saveData();
+    broadcastAttendanceUpdate(updatedAttendance);
+    return updatedAttendance;
+  }
+
+  async deleteAttendance(id: string): Promise<boolean> {
+    const deleted = this.attendance.delete(id);
+    if (deleted) {
+      this.saveData();
+      broadcastAttendanceDelete(id);
+    }
+    return deleted;
+  }
+
+  // User methods
+  async getUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.username.toLowerCase() === username.toLowerCase()
+    );
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const existing = await this.getUserByUsername(insertUser.username);
+    if (existing) {
+      throw new Error("Username already exists");
+    }
+
+    const id = randomUUID();
+    const user: User = {
+      ...insertUser,
+      id,
+      createdAt: new Date(),
+    };
+
+    this.users.set(id, user);
+    this.saveData();
+    return user;
+  }
+
+  async updateUserRole(id: string, role: string): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+
+    const updatedUser: User = {
+      ...user,
+      role,
+    };
+
+    this.users.set(id, updatedUser);
+    this.saveData();
+    return updatedUser;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    const deleted = this.users.delete(id);
+    if (deleted) {
+      this.saveData();
+    }
+    return deleted;
   }
 }
 
