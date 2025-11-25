@@ -222,12 +222,71 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
     }
   };
 
+  const shareToWhatsApp = () => {
+    const currentDate = new Date();
+    const todayDate = currentDate.toISOString().split("T")[0];
+    const todayDateFormatted = currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+    // Filter for TODAY's absent students only
+    const absentRecords = allAttendance.filter(
+      a => {
+        const recordDate = new Date(a.date).toISOString().split("T")[0];
+        return a.prayer === prayer && a.status === "absent" && recordDate === todayDate;
+      }
+    );
+
+    const absentStudents = absentRecords.map(record => ({
+      name: record.studentName,
+      className: record.className,
+      date: record.date,
+      reason: record.reason
+    }));
+
+    // Format the message
+    let message = `*🕌 ${prayer.toUpperCase()} - ABSENT STUDENTS*\n`;
+    message += `📅 Date: ${todayDateFormatted}\n`;
+    message += `👥 Total Absent: ${absentStudents.length}\n\n`;
+    message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+    if (absentStudents.length === 0) {
+      message += `✅ No absent students for ${prayer} today!\n\n`;
+    } else {
+      absentStudents.forEach((student, idx) => {
+        message += `${idx + 1}. ${student.name} (${student.className})`;
+        if (student.reason) {
+          message += ` - ${student.reason}`;
+        }
+        message += `\n`;
+      });
+      message += `\n`;
+    }
+
+    message += `━━━━━━━━━━━━━━━━━━━━\n`;
+    message += `📱 Caliph Attendance System`;
+
+    // Encode the message for URL
+    const encodedMessage = encodeURIComponent(message);
+
+    // Open WhatsApp with the pre-filled message
+    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+
+    toast({
+      title: "📱 Opening WhatsApp",
+      description: `${prayer} absent students list ready to share`,
+    });
+  };
+
   const downloadAbsentStudentsPDF = () => {
     const doc = new jsPDF();
     const currentDate = new Date();
+    const todayDate = currentDate.toISOString().split("T")[0];
 
+    // Filter for TODAY's absent students only
     const absentRecords = allAttendance.filter(
-      a => a.prayer === prayer && a.status === "absent"
+      a => {
+        const recordDate = new Date(a.date).toISOString().split("T")[0];
+        return a.prayer === prayer && a.status === "absent" && recordDate === todayDate;
+      }
     );
 
     const absentStudents = absentRecords.map(record => ({
@@ -239,18 +298,18 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
 
     doc.setFontSize(24);
     doc.setTextColor(0, 200, 83);
-    doc.text(`${prayer.toUpperCase()} - ABSENT STUDENTS`, 105, 30, { align: "center" });
+    doc.text(`${prayer.toUpperCase()} - TODAY'S ABSENT STUDENTS`, 105, 30, { align: "center" });
 
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
-    doc.text("Absent Students Report", 105, 40, { align: "center" });
+    doc.text("Daily Absent Students Report", 105, 40, { align: "center" });
 
     doc.setFontSize(14);
-    doc.text(`Generated: ${currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, 105, 50, { align: "center" });
+    doc.text(`Report Date: ${currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, 105, 50, { align: "center" });
 
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Total Absent: ${absentStudents.length}`, 14, 65);
+    doc.text(`Total Absent Today: ${absentStudents.length}`, 14, 65);
 
     if (absentStudents.length === 0) {
       doc.setFontSize(14);
@@ -342,12 +401,21 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
           <div className="flex gap-2 w-full sm:w-auto">
             <Button
               onClick={downloadAbsentStudentsPDF}
-              className="flex-1 sm:flex-initial bg-white/95 hover:bg-white text-emerald-600 hover:text-emerald-700 shadow-[0_10px_30px_-5px_rgba(0,200,83,0.4)] hover:shadow-[0_15px_40px_-5px_rgba(0,200,83,0.5)] active:shadow-[0_8px_20px_-5px_rgba(0,200,83,0.4)] transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0 rounded-xl sm:rounded-2xl px-6 sm:px-8 py-2.5 sm:py-3 font-bold text-sm sm:text-base touch-manipulation"
+              className="flex-1 sm:flex-initial bg-white/95 hover:bg-white text-emerald-600 hover:text-emerald-700 shadow-[0_10px_30px_-5px_rgba(0,200,83,0.4)] hover:shadow-[0_15px_40px_-5px_rgba(0,200,83,0.5)] active:shadow-[0_8px_20px_-5px_rgba(0,200,83,0.4)] transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-sm sm:text-base touch-manipulation"
               data-testid="button-download-absent-students"
             >
-              <span className="material-icons mr-2 text-lg sm:text-xl">download</span>
-              <span className="hidden sm:inline">Absent List</span>
-              <span className="sm:hidden">Download</span>
+              <span className="material-icons mr-1 sm:mr-2 text-lg sm:text-xl">download</span>
+              <span className="hidden sm:inline">PDF</span>
+              <span className="sm:hidden">PDF</span>
+            </Button>
+            <Button
+              onClick={shareToWhatsApp}
+              className="flex-1 sm:flex-initial bg-green-500 hover:bg-green-600 text-white shadow-[0_10px_30px_-5px_rgba(34,197,94,0.4)] hover:shadow-[0_15px_40px_-5px_rgba(34,197,94,0.5)] active:shadow-[0_8px_20px_-5px_rgba(34,197,94,0.4)] transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-sm sm:text-base touch-manipulation"
+              data-testid="button-whatsapp-absent-students"
+            >
+              <span className="mr-1 sm:mr-2 text-base sm:text-lg">📱</span>
+              <span className="hidden sm:inline">WhatsApp</span>
+              <span className="sm:hidden">Share</span>
             </Button>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
