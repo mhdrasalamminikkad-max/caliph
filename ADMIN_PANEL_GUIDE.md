@@ -14,9 +14,9 @@ All admin functionality has been successfully implemented and integrated into th
 3. Press **`Enter`**
 4. The admin panel will open instantly
 
-### Default Admin Credentials
-- **Username:** `admin`
-- **Password:** `admin123`
+### Default Login Credentials
+- **Username:** `user`
+- **Password:** `caliph786`
 
 > **Important:** Only users with the `admin` role can access the admin panel. Teachers will see an "Access Denied" message.
 

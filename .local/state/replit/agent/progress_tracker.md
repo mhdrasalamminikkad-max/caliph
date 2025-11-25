@@ -27,3 +27,4 @@
 [x] 27. Add admin role-based authorization middleware and frontend guards - VERIFIED COMPLETE
 [x] 28. Protect admin routes with requireAdmin middleware - VERIFIED COMPLETE
 [x] 29. Verify admin panel is fully functional and integrated into the application - VERIFIED COMPLETE
+[x] 30. Update default login credentials to username: user, password: caliph786 - COMPLETE

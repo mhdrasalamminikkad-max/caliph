@@ -119,19 +119,19 @@ export class MemStorage implements IStorage {
 
   private async ensureDefaultAdmin() {
     if (this.users.size === 0) {
-      console.log("📝 Creating default admin user...");
-      const hashedPassword = await bcrypt.hash("admin123", 10);
+      console.log("📝 Creating default user...");
+      const hashedPassword = await bcrypt.hash("caliph786", 10);
       const id = randomUUID();
       const admin: User = {
         id,
-        username: "admin",
+        username: "user",
         password: hashedPassword,
         role: "admin",
         createdAt: new Date(),
       };
       this.users.set(id, admin);
       this.saveData();
-      console.log("✅ Default admin created (username: admin, password: admin123)");
+      console.log("✅ Default user created (username: user, password: caliph786)");
     }
   }
 
