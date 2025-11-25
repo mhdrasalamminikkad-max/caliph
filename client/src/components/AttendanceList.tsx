@@ -176,11 +176,12 @@ export default function AttendanceList({ prayer, className, onBack }: Attendance
         };
       });
       
-      // Save ALL records in ONE operation (super fast!)
-      saveAttendanceBatch(attendanceRecords);
+      // Save ALL records - returns instantly after LocalStorage write
+      await saveAttendanceBatch(attendanceRecords);
+      return attendanceRecords;
     },
     onSuccess: () => {
-      // Invalidate queries in background
+      // Invalidate queries immediately (LocalStorage is already updated)
       queryClient.invalidateQueries({ queryKey: ["attendance"] });
       
       // Show instant success message
@@ -189,7 +190,7 @@ export default function AttendanceList({ prayer, className, onBack }: Attendance
         description: `${students.length} students recorded`,
       });
       
-      // Go back immediately
+      // Go back immediately (LocalStorage write is complete)
       onBack();
     },
     onError: (error: Error) => {

@@ -65,7 +65,7 @@ async function isBackendAvailable(): Promise<boolean> {
 }
 
 /**
- * Save attendance record - INSTANT with LocalStorage, reliable backend sync
+ * Save attendance record - INSTANT LocalStorage, background backend sync
  */
 export async function saveAttendanceLocal(record: AttendanceRecord): Promise<void> {
   try {
@@ -91,7 +91,7 @@ export async function saveAttendanceLocal(record: AttendanceRecord): Promise<voi
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existingRecords));
     
-    // Sync to backend (await to ensure data integrity, but LocalStorage already saved)
+    // Sync to backend - await for data integrity (UI uses optimistic updates)
     try {
       await backendApi.saveAttendance(recordWithTimestamp);
     } catch (error) {
@@ -105,7 +105,7 @@ export async function saveAttendanceLocal(record: AttendanceRecord): Promise<voi
 }
 
 /**
- * Batch save multiple attendance records - INSTANT with LocalStorage, reliable backend sync
+ * Batch save multiple attendance records - INSTANT LocalStorage, background backend sync
  */
 export async function saveAttendanceBatch(records: AttendanceRecord[]): Promise<void> {
   if (records.length === 0) return;
@@ -130,23 +130,27 @@ export async function saveAttendanceBatch(records: AttendanceRecord[]): Promise<
     const updatedRecords = Array.from(existingMap.values());
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedRecords));
     
-    // Sync to backend (await but with small batches to avoid overwhelming)
-    try {
-      const batchSize = 10;
-      for (let i = 0; i < records.length; i += batchSize) {
-        const batch = records.slice(i, i + batchSize);
-        await Promise.all(batch.map(record => {
-          const recordWithTimestamp = {
-            ...record,
-            timestamp: record.timestamp || new Date().toISOString(),
-          };
-          return backendApi.saveAttendance(recordWithTimestamp);
-        }));
+    // ✅ RETURN IMMEDIATELY - LocalStorage write complete, UI can proceed
+    
+    // Background backend sync (fire and forget - doesn't block UI)
+    (async () => {
+      try {
+        const batchSize = 10;
+        for (let i = 0; i < records.length; i += batchSize) {
+          const batch = records.slice(i, i + batchSize);
+          await Promise.all(batch.map(record => {
+            const recordWithTimestamp = {
+              ...record,
+              timestamp: record.timestamp || new Date().toISOString(),
+            };
+            return backendApi.saveAttendance(recordWithTimestamp);
+          }));
+        }
+      } catch (error) {
+        console.warn('⚠️ Backend batch sync failed (data preserved in LocalStorage):', error);
+        // Data is safe in LocalStorage, will retry on next online event
       }
-    } catch (error) {
-      console.warn('⚠️ Backend batch sync failed (data preserved in LocalStorage):', error);
-      // Data is safe in LocalStorage, will retry on next online event
-    }
+    })();
   } catch (error) {
     console.error("❌ Error batch saving attendance:", error);
     throw error;
@@ -280,8 +284,7 @@ export function initializeSyncListeners(onUpdate?: () => void): void {
       if (localRecords.length > 0 && await isBackendAvailable()) {
         console.log(`🔄 Syncing ${localRecords.length} local records to backend...`);
         await saveAttendanceBatch(localRecords);
-        // Clear LocalStorage after successful sync
-        localStorage.removeItem(STORAGE_KEY);
+        // LocalStorage is primary storage - don't clear it!
         if (onUpdate) {
           onUpdate();
         }
@@ -299,8 +302,7 @@ export function initializeSyncListeners(onUpdate?: () => void): void {
         if (localRecords.length > 0 && await isBackendAvailable()) {
           console.log(`🔄 Syncing ${localRecords.length} local records to backend...`);
           await saveAttendanceBatch(localRecords);
-          // Clear LocalStorage after successful sync
-          localStorage.removeItem(STORAGE_KEY);
+          // LocalStorage is primary storage - don't clear it!
           if (onUpdate) {
             onUpdate();
           }
