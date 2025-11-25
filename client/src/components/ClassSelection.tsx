@@ -82,7 +82,7 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       
       try {
         // Step 1: Create class locally (this is the critical step)
-        const newClass = createClass(name);
+        const newClass = await createClass(name);
         console.log(`✅ Class "${newClass.name}" created locally with ID: ${newClass.id}`);
         
         // TODO: Replace with backend API call when implementing new backend
@@ -297,7 +297,7 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       }
       studentsByClass[record.className].push({
         name: record.studentName,
-        reason: record.reason
+        reason: record.reason || undefined
       });
     });
 
