@@ -150,7 +150,7 @@
       "status": "present",
       "id": "7f1d04db-38e8-43fa-884b-a92857548d0f",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:12.682Z"
+      "timestamp": "2025-11-25T16:38:50.062Z"
     },
     "58d74b69-8efc-4bf6-8d33-eb9b44c8910f": {
       "studentId": "b6995b13-3bf3-45f7-b4db-7a84edebe10e",
@@ -161,7 +161,7 @@
       "status": "absent",
       "id": "58d74b69-8efc-4bf6-8d33-eb9b44c8910f",
       "reason": "",
-      "timestamp": "2025-11-25T16:30:12.677Z"
+      "timestamp": "2025-11-25T16:38:50.064Z"
     },
     "e37f392b-80c9-4088-b245-ad2e5e7c95b0": {
       "studentId": "7c816278-1276-48ac-abb7-f19957c4c583",
@@ -172,7 +172,7 @@
       "status": "present",
       "id": "e37f392b-80c9-4088-b245-ad2e5e7c95b0",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:12.665Z"
+      "timestamp": "2025-11-25T16:38:50.070Z"
     },
     "c4f13d02-4b09-4071-b2f0-f0e35c47dd66": {
       "studentId": "12626686-ccea-4c72-8421-62dfbc206bc4",
@@ -183,7 +183,7 @@
       "status": "absent",
       "id": "c4f13d02-4b09-4071-b2f0-f0e35c47dd66",
       "reason": "",
-      "timestamp": "2025-11-25T16:30:12.685Z"
+      "timestamp": "2025-11-25T16:38:50.087Z"
     },
     "8caff728-2cc0-4e74-b25c-e236462c33fd": {
       "studentId": "05e21a0d-1388-4b61-9ab6-67c6eef9aaed",
@@ -194,7 +194,7 @@
       "status": "present",
       "id": "8caff728-2cc0-4e74-b25c-e236462c33fd",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:12.673Z"
+      "timestamp": "2025-11-25T16:38:50.090Z"
     },
     "e208fe8c-ba8c-422f-bf7b-36cd0c086317": {
       "studentId": "1b45445f-0000-4c2e-8f67-00747f483579",
@@ -205,7 +205,7 @@
       "status": "absent",
       "id": "e208fe8c-ba8c-422f-bf7b-36cd0c086317",
       "reason": "",
-      "timestamp": "2025-11-25T16:30:12.669Z"
+      "timestamp": "2025-11-25T16:38:50.097Z"
     },
     "b8c1660b-cd0b-4d20-82ca-1c38fb0b6686": {
       "studentId": "a75b8337-32bb-4f4b-a832-8c84f615054b",
@@ -216,7 +216,7 @@
       "status": "present",
       "id": "b8c1660b-cd0b-4d20-82ca-1c38fb0b6686",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:13.015Z"
+      "timestamp": "2025-11-25T16:38:50.099Z"
     },
     "933ca400-a297-41ca-a36e-fc855f488f67": {
       "studentId": "9fab8b6e-b97f-4945-af36-9b75dc00d344",
@@ -227,7 +227,7 @@
       "status": "absent",
       "id": "933ca400-a297-41ca-a36e-fc855f488f67",
       "reason": "",
-      "timestamp": "2025-11-25T16:30:13.017Z"
+      "timestamp": "2025-11-25T16:38:50.092Z"
     },
     "90c7e5fa-ba61-4cbd-a2b9-5d0d3609cc48": {
       "studentId": "1ab88f2d-2188-477c-84b7-235b743f3eaa",
@@ -238,7 +238,7 @@
       "status": "absent",
       "id": "90c7e5fa-ba61-4cbd-a2b9-5d0d3609cc48",
       "reason": "",
-      "timestamp": "2025-11-25T16:30:13.102Z"
+      "timestamp": "2025-11-25T16:38:50.094Z"
     },
     "a7e2e767-5b0f-48a9-851c-339b9ee94fd4": {
       "studentId": "c98dbd3a-e7a5-43f7-883e-d73600e2d9cc",
@@ -249,7 +249,7 @@
       "status": "absent",
       "id": "a7e2e767-5b0f-48a9-851c-339b9ee94fd4",
       "reason": "",
-      "timestamp": "2025-11-25T16:30:13.127Z"
+      "timestamp": "2025-11-25T16:38:50.106Z"
     },
     "287f3a5f-4a88-4ae4-b6de-934af2ea666d": {
       "studentId": "abc8032f-df70-4998-90fa-1c35efd2caef",
@@ -260,7 +260,7 @@
       "status": "present",
       "id": "287f3a5f-4a88-4ae4-b6de-934af2ea666d",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:13.506Z"
+      "timestamp": "2025-11-25T16:38:50.111Z"
     },
     "5ff75186-5ccd-4fe2-9575-f3c06e9364ec": {
       "studentId": "78db4df2-ec35-406f-b3b8-25b3c5339566",
@@ -271,7 +271,7 @@
       "status": "present",
       "id": "5ff75186-5ccd-4fe2-9575-f3c06e9364ec",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:13.500Z"
+      "timestamp": "2025-11-25T16:38:50.114Z"
     },
     "3863bd21-d434-433a-abf3-eb0e2d305ba4": {
       "studentId": "b3366467-9af9-4b0f-805a-084031ed42c8",
@@ -282,7 +282,7 @@
       "status": "absent",
       "id": "3863bd21-d434-433a-abf3-eb0e2d305ba4",
       "reason": "",
-      "timestamp": "2025-11-25T16:30:13.498Z"
+      "timestamp": "2025-11-25T16:38:50.115Z"
     },
     "aac25f9e-f3d0-464c-a007-31503c2830be": {
       "studentId": "fd9a7d76-0b93-45c0-b31c-cb317b7b54ee",
@@ -293,7 +293,7 @@
       "status": "present",
       "id": "aac25f9e-f3d0-464c-a007-31503c2830be",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:13.495Z"
+      "timestamp": "2025-11-25T16:38:50.117Z"
     },
     "d4a78e53-29a7-4e59-bbb3-77648f25611c": {
       "studentId": "92fd0300-867c-4510-a842-24a225ff653a",
@@ -304,7 +304,7 @@
       "status": "absent",
       "id": "d4a78e53-29a7-4e59-bbb3-77648f25611c",
       "reason": "",
-      "timestamp": "2025-11-25T16:30:13.504Z"
+      "timestamp": "2025-11-25T16:38:50.119Z"
     },
     "1539b1d4-09cf-4541-8a4b-cf9ed6dc3c50": {
       "studentId": "bb9ffe08-2c6e-4afb-b03b-b63747411c88",
@@ -315,7 +315,7 @@
       "status": "present",
       "id": "1539b1d4-09cf-4541-8a4b-cf9ed6dc3c50",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:13.502Z"
+      "timestamp": "2025-11-25T16:38:50.123Z"
     },
     "0d7e2719-e7c3-45f5-a5d9-730d4d5328a7": {
       "studentId": "8b9246d9-9509-4417-a8c4-c2dba83b6e20",
@@ -326,7 +326,7 @@
       "status": "absent",
       "id": "0d7e2719-e7c3-45f5-a5d9-730d4d5328a7",
       "reason": "",
-      "timestamp": "2025-11-25T16:30:13.826Z"
+      "timestamp": "2025-11-25T16:38:50.130Z"
     },
     "1d5eb020-d939-4691-80df-c50278fc1cd6": {
       "studentId": "23a9c406-e046-4113-b1ee-efac877e80d7",
@@ -337,7 +337,7 @@
       "status": "present",
       "id": "1d5eb020-d939-4691-80df-c50278fc1cd6",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:13.820Z"
+      "timestamp": "2025-11-25T16:38:50.125Z"
     },
     "f5a03d7a-60aa-49f4-b2fd-5ad425bd55a2": {
       "studentId": "a994b367-f04a-4960-bf69-1be683030ec5",
@@ -348,7 +348,7 @@
       "status": "present",
       "id": "f5a03d7a-60aa-49f4-b2fd-5ad425bd55a2",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:13.832Z"
+      "timestamp": "2025-11-25T16:38:50.127Z"
     },
     "1f186071-6d91-4b62-a943-2e437566a2c8": {
       "studentId": "91fea271-1797-4047-bb85-b9b1fb542f33",
@@ -359,7 +359,7 @@
       "status": "present",
       "id": "1f186071-6d91-4b62-a943-2e437566a2c8",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:13.828Z"
+      "timestamp": "2025-11-25T16:38:50.129Z"
     },
     "54d1c590-7241-49fc-be69-6cf7ee2f0528": {
       "studentId": "3b5d0201-4b0b-4f37-82ee-6e5615388cc7",
@@ -370,7 +370,7 @@
       "status": "present",
       "id": "54d1c590-7241-49fc-be69-6cf7ee2f0528",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:14.210Z"
+      "timestamp": "2025-11-25T16:38:50.137Z"
     },
     "1733314b-d922-4954-a10f-b0541d4b0039": {
       "studentId": "fcc05a48-3241-4cf7-97f2-8fcc49389960",
@@ -381,7 +381,7 @@
       "status": "present",
       "id": "1733314b-d922-4954-a10f-b0541d4b0039",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:14.208Z"
+      "timestamp": "2025-11-25T16:38:50.140Z"
     },
     "413b5c8b-eaa2-464c-b000-3b9e3287fd3d": {
       "studentId": "0952292a-d12c-4e66-b8c8-ee1a0e42a1d7",
@@ -392,8 +392,16 @@
       "status": "present",
       "id": "413b5c8b-eaa2-464c-b000-3b9e3287fd3d",
       "reason": null,
-      "timestamp": "2025-11-25T16:30:14.205Z"
+      "timestamp": "2025-11-25T16:38:50.145Z"
     }
   },
-  "users": {}
+  "users": {
+    "e4f93d14-9925-4140-ac6e-e2e245865044": {
+      "id": "e4f93d14-9925-4140-ac6e-e2e245865044",
+      "username": "admin",
+      "password": "$2b$10$WtFFcprNcWXO0GyAzf/gnOn.IrwzV1APT.IcXciRio4dN7y8WAcRK",
+      "role": "admin",
+      "createdAt": "2025-11-25T16:38:25.664Z"
+    }
+  }
 }
