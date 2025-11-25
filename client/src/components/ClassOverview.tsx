@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { sanitizeForPDF } from "@/lib/pdfSanitizer";
 import type { AttendanceRecord } from "@/lib/hybridStorage";
 
 interface ClassOverviewProps {
@@ -106,7 +107,7 @@ export default function ClassOverview({ onBack, onClassClick }: ClassOverviewPro
     // Class Info
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(16);
-    doc.text(`Class: ${className}`, 20, 55);
+    doc.text(`Class: ${sanitizeForPDF(className)}`, 20, 55);
     doc.setFontSize(12);
     doc.text(`Total Students: ${stats.studentCount}`, 20, 65);
     
@@ -162,8 +163,8 @@ export default function ClassOverview({ onBack, onClassClick }: ClassOverviewPro
       const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
       
       return [
-        student.rollNumber || "-",
-        student.name,
+        sanitizeForPDF(student.rollNumber || "-"),
+        sanitizeForPDF(student.name),
         total.toString(),
         present.toString(),
         (total - present).toString(),
@@ -194,8 +195,8 @@ export default function ClassOverview({ onBack, onClassClick }: ClassOverviewPro
           const student = stats.classStudents.find((s: any) => s.id === record.studentId);
           return [
             new Date(record.date).toLocaleDateString(),
-            record.prayer,
-            student?.name || "Unknown",
+            sanitizeForPDF(record.prayer),
+            sanitizeForPDF(student?.name || "Unknown"),
             record.status === "present" ? "✓" : "✗"
           ];
         });

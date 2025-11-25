@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { sanitizeForPDF, sanitizeForPDFTable } from "@/lib/pdfSanitizer";
 
 interface StudentReportProps {
   onBack: () => void;
@@ -80,9 +81,9 @@ export default function StudentReport({ onBack }: StudentReportProps) {
     // Student Info
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(16);
-    doc.text(`Student: ${student.name}`, 20, 55);
+    doc.text(`Student: ${sanitizeForPDF(student.name)}`, 20, 55);
     doc.setFontSize(12);
-    doc.text(`Class: ${student.className}`, 20, 65);
+    doc.text(`Class: ${sanitizeForPDF(student.className)}`, 20, 65);
 
     // Stats boxes
     const statsY = 80;
@@ -122,9 +123,9 @@ export default function StudentReport({ onBack }: StudentReportProps) {
     // Attendance History Table
     const tableData = studentAttendance.slice(0, 50).map((record: any) => [
       new Date(record.date).toLocaleDateString(),
-      record.prayer,
+      sanitizeForPDF(record.prayer),
       record.status === "present" ? "✓ Present" : "✗ Absent",
-      record.reason || "-",
+      sanitizeForPDF(record.reason || "-"),
     ]);
 
     autoTable(doc, {
@@ -147,7 +148,7 @@ export default function StudentReport({ onBack }: StudentReportProps) {
       styles: { fontSize: 9 },
     });
 
-    doc.save(`${student.name}_Attendance_Report.pdf`);
+    doc.save(`${sanitizeForPDF(student.name)}_Attendance_Report.pdf`);
   };
 
   if (selectedStudent) {

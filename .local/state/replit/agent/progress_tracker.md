@@ -17,3 +17,7 @@
 [x] 17. Add optimistic updates: onSuccess fires after LocalStorage write for instant feedback
 [x] 18. Fix online sync flow: LocalStorage is now primary storage, never cleared after sync
 [x] 19. Complete instant performance optimization with data integrity maintained
+[x] 20. Add PDF security: Create pdfSanitizer utility to remove malicious content
+[x] 21. Sanitize all PDF user input: StudentReport, SummaryPage, ClassOverview
+[x] 22. Remove control characters, PDF injection chars, limit field lengths in PDFs
+[x] 23. Fix PDF "virus" issue: All user data now sanitized before PDF generation

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { sanitizeForPDF, sanitizeForPDFTable } from "@/lib/pdfSanitizer";
 import type { AttendanceRecord } from "@/lib/backendApi";
 import {
   Dialog,
@@ -257,7 +258,7 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
       // Prayer header
       doc.setFontSize(16);
       doc.setTextColor(0, 200, 83);
-      doc.text(`${prayerData.prayer} - ${prayerData.absentStudents.length} Absent`, 14, currentY);
+      doc.text(`${sanitizeForPDF(prayerData.prayer)} - ${prayerData.absentStudents.length} Absent`, 14, currentY);
       currentY += 10;
 
       if (prayerData.absentStudents.length === 0) {
@@ -269,10 +270,10 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
         // Create table data
         const tableData = prayerData.absentStudents.map((student, idx) => [
           (idx + 1).toString(),
-          student.name,
-          student.className,
+          sanitizeForPDF(student.name),
+          sanitizeForPDF(student.className),
           new Date(student.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-          student.reason || "-"
+          sanitizeForPDF(student.reason || "-")
         ]);
 
         autoTable(doc, {
@@ -817,8 +818,8 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
     // Student Info
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Student: ${student.name}`, 14, 35);
-    doc.text(`Class: ${student.className}`, 14, 42);
+    doc.text(`Student: ${sanitizeForPDF(student.name)}`, 14, 35);
+    doc.text(`Class: ${sanitizeForPDF(student.className)}`, 14, 42);
     doc.text(`Period: ${startDate} to ${endDate}`, 14, 49);
     doc.text(`Overall Attendance: ${student.percentage}%`, 14, 56);
     
@@ -826,9 +827,9 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
     const studentAttendance = allAttendance.filter(a => a.studentId === student.id);
     const attendanceData = studentAttendance.map(a => [
       a.date,
-      a.prayer,
+      sanitizeForPDF(a.prayer),
       a.status,
-      a.reason || "-"
+      sanitizeForPDF(a.reason || "-")
     ]);
 
     autoTable(doc, {
@@ -839,7 +840,7 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
       headStyles: { fillColor: [0, 200, 83] },
     });
 
-    doc.save(`${student.name}_attendance_${startDate}_to_${endDate}.pdf`);
+    doc.save(`${sanitizeForPDF(student.name)}_attendance_${startDate}_to_${endDate}.pdf`);
   };
 
   return (
