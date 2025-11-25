@@ -13,6 +13,7 @@ import LoginPage from "@/components/LoginPage";
 import OtherAttendance from "@/components/OtherAttendance";
 import OtherSummaryPage from "@/components/OtherSummaryPage";
 import SyncStatusIndicator from "@/components/SyncStatusIndicator";
+import AdminPanel from "@/pages/admin";
 import { Prayer } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { initializeSyncListeners } from "@/lib/hybridStorage";
@@ -29,12 +30,14 @@ type View =
   | { type: "student-report" }
   | { type: "manage-students"; className: string }
   | { type: "other-attendance" }
-  | { type: "other-summary" };
+  | { type: "other-summary" }
+  | { type: "admin" };
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [view, setView] = useState<View>({ type: "home" });
+  const [keyBuffer, setKeyBuffer] = useState("");
 
   // Check authentication on mount
   useEffect(() => {
@@ -42,6 +45,39 @@ function App() {
     setIsAuthenticated(authStatus === "true");
     setIsCheckingAuth(false);
   }, []);
+
+  // Global keyboard listener for admin panel access (786786 + Enter)
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only listen when authenticated
+      if (!isAuthenticated) return;
+
+      // Track key presses
+      if (e.key === "Enter") {
+        // Check if the buffer matches the admin code
+        if (keyBuffer === "786786") {
+          console.log("🔑 Admin code detected - accessing admin panel");
+          setView({ type: "admin" });
+          setKeyBuffer("");
+        } else {
+          setKeyBuffer("");
+        }
+      } else if (e.key >= "0" && e.key <= "9") {
+        // Add digit to buffer
+        setKeyBuffer(prev => {
+          const newBuffer = prev + e.key;
+          // Keep only last 6 digits
+          return newBuffer.slice(-6);
+        });
+      } else if (e.key.length === 1) {
+        // Reset buffer on any other character
+        setKeyBuffer("");
+      }
+    };
+
+    window.addEventListener("keypress", handleKeyPress);
+    return () => window.removeEventListener("keypress", handleKeyPress);
+  }, [isAuthenticated, keyBuffer]);
 
   // Initialize mobile storage and hybrid storage sync listeners
   useEffect(() => {
@@ -266,6 +302,9 @@ function App() {
             onBack={() => setView({ type: "other-attendance" })}
           />
         );
+      
+      case "admin":
+        return <AdminPanel onExit={() => setView({ type: "home" })} />;
       
       default:
         return <HomePage 
