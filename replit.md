@@ -13,10 +13,21 @@ Caliph Attendance is a mobile-first web application designed for Islamic schools
 - PDF report generation
 - Real-time multi-device synchronization
 - Pre-populated seed data for quick deployment
+- Admin panel with full management and data clearing capabilities
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## Recent Changes (November 25, 2025)
+
+### Clear Attendance Data Feature
+- **Removed**: "Clear All Storage" button from home screen to prevent accidental data loss
+- **Added**: New "Clear Attendance" tab (6th tab) in admin panel
+- **Functionality**: Clears only attendance records while preserving classes and students
+- **Security**: Admin-only access with two-step confirmation process
+- **Backend**: New protected endpoint `DELETE /api/attendance` with `requireAdmin` middleware
+- **Component**: `ClearAttendanceData.tsx` in admin panel with comprehensive safety warnings
 
 ## System Architecture
 
