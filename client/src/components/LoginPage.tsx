@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/authContext";
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -13,28 +14,45 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { setAuth } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Check credentials
-    if (username === "user" && password === "caliph786") {
-      // Store login state
+    try {
+      // Call the login API
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Login failed");
+      }
+
+      const data = await response.json();
+      
+      // Store auth data in context
+      setAuth(data.user, data.token);
+      
+      // Store login state for backward compatibility
       localStorage.setItem("isAuthenticated", "true");
       
       toast({
         title: "Login Successful",
-        description: "Welcome to Caliph Attendance!",
+        description: `Welcome, ${data.user.username}!`,
       });
       
       setTimeout(() => {
         onLogin();
       }, 500);
-    } else {
+    } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: "Invalid username or password",
+        description: error.message || "Invalid username or password",
         variant: "destructive",
       });
       setIsLoading(false);

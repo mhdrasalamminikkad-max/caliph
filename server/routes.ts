@@ -2,8 +2,33 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertClassSchema, insertStudentSchema, insertAttendanceSchema, insertUserSchema } from "@shared/schema";
+import { requireAdmin } from "./middleware/auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Login route (public)
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      const user = await storage.verifyPassword(username, password);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+
+      // Return user data (excluding password) with userId as token
+      // In production, use proper JWT tokens
+      res.json({
+        token: user.id,
+        user: {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+        },
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
   // Class routes
   app.get("/api/classes", async (_req, res) => {
     try {
@@ -211,27 +236,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User routes
-  app.get("/api/users", async (_req, res) => {
+  // User routes (protected - admin only)
+  app.get("/api/users", requireAdmin, async (_req, res) => {
     try {
       const users = await storage.getUsers();
-      res.json(users);
+      // Remove passwords from response
+      const sanitizedUsers = users.map(({ password, ...user }) => user);
+      res.json(sanitizedUsers);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
 
-  app.post("/api/users", async (req, res) => {
+  app.post("/api/users", requireAdmin, async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       const newUser = await storage.createUser(userData);
-      res.status(201).json(newUser);
+      // Remove password from response
+      const { password, ...sanitizedUser } = newUser;
+      res.status(201).json(sanitizedUser);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
   });
 
-  app.patch("/api/users/:id/role", async (req, res) => {
+  app.patch("/api/users/:id/role", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const { role } = req.body;
@@ -242,13 +271,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
-      res.json(updatedUser);
+      // Remove password from response
+      const { password, ...sanitizedUser } = updatedUser;
+      res.json(sanitizedUser);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
   });
 
-  app.delete("/api/users/:id", async (req, res) => {
+  app.delete("/api/users/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const deleted = await storage.deleteUser(id);

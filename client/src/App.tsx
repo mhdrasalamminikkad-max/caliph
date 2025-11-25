@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider, useAuth } from "@/lib/authContext";
 import HomePage from "@/components/HomePage";
 import ClassSelection from "@/components/ClassSelection";
 import AttendanceList from "@/components/AttendanceList";
@@ -20,6 +21,7 @@ import { initializeSyncListeners } from "@/lib/hybridStorage";
 import { initializeMobileStorage } from "@/lib/mobileStorage";
 import { initializeSeedData } from "@/lib/offlineApi";
 import { connectWebSocket, disconnectWebSocket, isWebSocketConnected } from "@/lib/websocketClient";
+import { useToast } from "@/hooks/use-toast";
 
 type View = 
   | { type: "home" }
@@ -33,7 +35,9 @@ type View =
   | { type: "other-summary" }
   | { type: "admin" };
 
-function App() {
+function AppContent() {
+  const { isAdmin } = useAuth();
+  const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [view, setView] = useState<View>({ type: "home" });
@@ -56,7 +60,20 @@ function App() {
       if (e.key === "Enter") {
         // Check if the buffer matches the admin code
         if (keyBuffer === "786786") {
-          console.log("🔑 Admin code detected - accessing admin panel");
+          console.log("🔑 Admin code detected - checking admin access");
+          
+          // Check if user is admin
+          if (!isAdmin) {
+            toast({
+              title: "Access Denied",
+              description: "You must be an administrator to access the admin panel",
+              variant: "destructive",
+            });
+            setKeyBuffer("");
+            return;
+          }
+          
+          console.log("✅ Admin access granted");
           setView({ type: "admin" });
           setKeyBuffer("");
         } else {
@@ -77,7 +94,7 @@ function App() {
 
     window.addEventListener("keypress", handleKeyPress);
     return () => window.removeEventListener("keypress", handleKeyPress);
-  }, [isAuthenticated, keyBuffer]);
+  }, [isAuthenticated, keyBuffer, isAdmin, toast]);
 
   // Initialize mobile storage and hybrid storage sync listeners
   useEffect(() => {
@@ -315,12 +332,11 @@ function App() {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        {renderView()}
-        
-        {/* Bottom Navigation - Mobile Only (Show on main views) */}
-        {(view.type === "home" || view.type === "summary" || view.type === "class-overview" || view.type === "student-report") && (
+    <TooltipProvider>
+      {renderView()}
+      
+      {/* Bottom Navigation - Mobile Only (Show on main views) */}
+      {(view.type === "home" || view.type === "summary" || view.type === "class-overview" || view.type === "student-report") && (
           <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 pb-safe">
             <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-emerald-200/50 dark:border-emerald-800/50 shadow-[0_-10px_30px_-10px_rgba(0,200,83,0.3)]">
               <div className="max-w-4xl mx-auto px-2 py-2">
@@ -389,12 +405,21 @@ function App() {
             </div>
           </div>
         )}
-        
-        {/* Sync Status Indicator - Hidden (automatic background sync only) */}
-        {/* {isAuthenticated && <SyncStatusIndicator />} */}
-        
-        <Toaster />
-      </TooltipProvider>
+      
+      {/* Sync Status Indicator - Hidden (automatic background sync only) */}
+      {/* {isAuthenticated && <SyncStatusIndicator />} */}
+      
+      <Toaster />
+    </TooltipProvider>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

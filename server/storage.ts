@@ -2,6 +2,7 @@ import { type Student, type InsertStudent, type Attendance, type InsertAttendanc
 import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
+import bcrypt from "bcryptjs";
 import { broadcastAttendanceUpdate, broadcastAttendanceDelete, broadcastClassUpdate, broadcastClassDelete, broadcastStudentUpdate, broadcastStudentDelete } from './websocket';
 
 const DATA_FILE = path.join(process.cwd(), "data", "attendance_data.json");
@@ -42,6 +43,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  verifyPassword(username: string, password: string): Promise<User | null>;
   updateUserRole(id: string, role: string): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
 }
@@ -105,10 +107,31 @@ export class MemStorage implements IStorage {
         console.log("No data file found, starting with empty data");
         this.initializeEmptyData();
       }
+      
+      // Create default admin user if no users exist
+      this.ensureDefaultAdmin();
     } catch (error) {
       console.error("❌ Error loading data:", error);
       console.log("Initializing with empty data due to error");
       this.initializeEmptyData();
+    }
+  }
+
+  private async ensureDefaultAdmin() {
+    if (this.users.size === 0) {
+      console.log("📝 Creating default admin user...");
+      const hashedPassword = await bcrypt.hash("admin123", 10);
+      const id = randomUUID();
+      const admin: User = {
+        id,
+        username: "admin",
+        password: hashedPassword,
+        role: "admin",
+        createdAt: new Date(),
+      };
+      this.users.set(id, admin);
+      this.saveData();
+      console.log("✅ Default admin created (username: admin, password: admin123)");
     }
   }
 
@@ -414,16 +437,29 @@ export class MemStorage implements IStorage {
       throw new Error("Username already exists");
     }
 
+    // Hash password before storing
+    const hashedPassword = await bcrypt.hash(insertUser.password, 10);
+
     const id = randomUUID();
     const user: User = {
       ...insertUser,
       id,
+      password: hashedPassword,
+      role: insertUser.role || "teacher",
       createdAt: new Date(),
     };
 
     this.users.set(id, user);
     this.saveData();
     return user;
+  }
+
+  async verifyPassword(username: string, password: string): Promise<User | null> {
+    const user = await this.getUserByUsername(username);
+    if (!user) return null;
+
+    const isValid = await bcrypt.compare(password, user.password);
+    return isValid ? user : null;
   }
 
   async updateUserRole(id: string, role: string): Promise<User | undefined> {

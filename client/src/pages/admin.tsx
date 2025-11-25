@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, GraduationCap, School, Calendar, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import UserManagement from "@/components/admin/UserManagement";
+import StudentManagement from "@/components/admin/StudentManagement";
+import ClassManagement from "@/components/admin/ClassManagement";
+import AttendanceEditor from "@/components/admin/AttendanceEditor";
+import BackdatedAttendance from "@/components/admin/BackdatedAttendance";
 
 interface AdminPanelProps {
   onExit?: () => void;
@@ -67,73 +71,23 @@ export default function AdminPanel({ onExit }: AdminPanelProps) {
           </TabsList>
 
           <TabsContent value="users" className="space-y-4">
-            <Card data-testid="card-user-management">
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>
-                  Add new users and manage admin privileges
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">User management interface coming soon...</p>
-              </CardContent>
-            </Card>
+            <UserManagement />
           </TabsContent>
 
           <TabsContent value="students" className="space-y-4">
-            <Card data-testid="card-student-management">
-              <CardHeader>
-                <CardTitle>Student Management</CardTitle>
-                <CardDescription>
-                  Add and edit student information
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Student management interface coming soon...</p>
-              </CardContent>
-            </Card>
+            <StudentManagement />
           </TabsContent>
 
           <TabsContent value="classes" className="space-y-4">
-            <Card data-testid="card-class-management">
-              <CardHeader>
-                <CardTitle>Class Management</CardTitle>
-                <CardDescription>
-                  Add and manage classes
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Class management interface coming soon...</p>
-              </CardContent>
-            </Card>
+            <ClassManagement />
           </TabsContent>
 
           <TabsContent value="attendance-editor" className="space-y-4">
-            <Card data-testid="card-attendance-editor">
-              <CardHeader>
-                <CardTitle>Edit Attendance Records</CardTitle>
-                <CardDescription>
-                  Search for and modify existing attendance records
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Attendance editor interface coming soon...</p>
-              </CardContent>
-            </Card>
+            <AttendanceEditor />
           </TabsContent>
 
           <TabsContent value="backdated-attendance" className="space-y-4">
-            <Card data-testid="card-backdated-attendance">
-              <CardHeader>
-                <CardTitle>Add Previous Attendance</CardTitle>
-                <CardDescription>
-                  Add attendance records for past dates
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Backdated attendance interface coming soon...</p>
-              </CardContent>
-            </Card>
+            <BackdatedAttendance />
           </TabsContent>
         </Tabs>
       </div>

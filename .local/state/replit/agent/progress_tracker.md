@@ -21,3 +21,8 @@
 [x] 21. Sanitize all PDF user input: StudentReport, SummaryPage, ClassOverview
 [x] 22. Remove control characters, PDF injection chars, limit field lengths in PDFs
 [x] 23. Fix PDF "virus" issue: All user data now sanitized before PDF generation
+[x] 24. Add admin panel with keyboard shortcut (786786 + Enter)
+[x] 25. Implement user management, student/class/attendance management in admin panel
+[x] 26. Add password hashing with bcrypt for security
+[x] 27. Add admin role-based authorization middleware and frontend guards
+[x] 28. Protect admin routes with requireAdmin middleware
