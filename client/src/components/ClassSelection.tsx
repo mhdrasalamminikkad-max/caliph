@@ -225,7 +225,6 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
   const shareToWhatsApp = () => {
     const currentDate = new Date();
     const todayDate = currentDate.toISOString().split("T")[0];
-    const todayDateFormatted = currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
     // Filter for TODAY's absent students only
     const absentRecords = allAttendance.filter(
@@ -235,34 +234,33 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       }
     );
 
-    const absentStudents = absentRecords.map(record => ({
-      name: record.studentName,
-      className: record.className,
-      date: record.date,
-      reason: record.reason
-    }));
+    // Group absent students by class
+    const absentByClass: Record<string, string[]> = {};
+    absentRecords.forEach(record => {
+      if (!absentByClass[record.className]) {
+        absentByClass[record.className] = [];
+      }
+      absentByClass[record.className].push(record.studentName);
+    });
+
+    // Sort class names alphabetically
+    const sortedClasses = classes.map(c => c.name).sort();
 
     // Format the message
-    let message = `*🕌 ${prayer.toUpperCase()} - ABSENT STUDENTS*\n`;
-    message += `📅 Date: ${todayDateFormatted}\n`;
-    message += `👥 Total Absent: ${absentStudents.length}\n\n`;
-    message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let message = `*${prayer}*\n`;
 
-    if (absentStudents.length === 0) {
-      message += `✅ No absent students for ${prayer} today!\n\n`;
-    } else {
-      absentStudents.forEach((student, idx) => {
-        message += `${idx + 1}. ${student.name} (${student.className})`;
-        if (student.reason) {
-          message += ` - ${student.reason}`;
-        }
-        message += `\n`;
-      });
-      message += `\n`;
-    }
-
-    message += `━━━━━━━━━━━━━━━━━━━━\n`;
-    message += `📱 Caliph Attendance System`;
+    sortedClasses.forEach((className) => {
+      message += `${className}\n`;
+      
+      const absentStudents = absentByClass[className];
+      if (!absentStudents || absentStudents.length === 0) {
+        message += `All present\n`;
+      } else {
+        absentStudents.forEach((studentName) => {
+          message += `${studentName}\n`;
+        });
+      }
+    });
 
     // Encode the message for URL
     const encodedMessage = encodeURIComponent(message);
@@ -272,7 +270,7 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
 
     toast({
       title: "📱 Opening WhatsApp",
-      description: `${prayer} absent students list ready to share`,
+      description: `${prayer} attendance list ready to share`,
     });
   };
 
@@ -290,26 +288,33 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
     );
 
     // Group absent students by class
-    const studentsByClass: Record<string, string[]> = {};
+    const absentByClass: Record<string, string[]> = {};
     absentRecords.forEach(record => {
-      if (!studentsByClass[record.className]) {
-        studentsByClass[record.className] = [];
+      if (!absentByClass[record.className]) {
+        absentByClass[record.className] = [];
       }
-      studentsByClass[record.className].push(record.studentName);
+      absentByClass[record.className].push(record.studentName);
     });
 
     // Sort class names alphabetically
-    const sortedClasses = Object.keys(studentsByClass).sort();
+    const sortedClasses = classes.map(c => c.name).sort();
 
     // Starting Y position
     let yPosition = 20;
-    doc.setFontSize(11);
+    doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+
+    // Prayer name at the top
+    doc.text(prayer, 20, yPosition);
+    yPosition += 10;
+
+    doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
 
-    // Loop through each class
+    // Loop through ALL classes
     sortedClasses.forEach((className) => {
-      const students = studentsByClass[className];
+      const absentStudents = absentByClass[className];
 
       // Check if we need a new page
       if (yPosition > 270) {
@@ -321,26 +326,28 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       doc.text(className, 20, yPosition);
       yPosition += 7;
 
-      // Student names
-      students.forEach((studentName) => {
-        // Check if we need a new page
-        if (yPosition > 270) {
-          doc.addPage();
-          yPosition = 20;
-        }
-        doc.text(studentName, 25, yPosition);
+      // Either "All present" or list of absent students
+      if (!absentStudents || absentStudents.length === 0) {
+        doc.text("All present", 20, yPosition);
         yPosition += 6;
-      });
-
-      // Add spacing between classes
-      yPosition += 3;
+      } else {
+        absentStudents.forEach((studentName) => {
+          // Check if we need a new page
+          if (yPosition > 270) {
+            doc.addPage();
+            yPosition = 20;
+          }
+          doc.text(studentName, 20, yPosition);
+          yPosition += 6;
+        });
+      }
     });
 
-    doc.save(`${prayer}_Absent_Students_${currentDate.toISOString().split("T")[0]}.pdf`);
+    doc.save(`${prayer}_Attendance_${currentDate.toISOString().split("T")[0]}.pdf`);
 
     toast({
       title: "✅ PDF Downloaded",
-      description: `${prayer} absent students list downloaded successfully`,
+      description: `${prayer} attendance list downloaded successfully`,
     });
   };
 
