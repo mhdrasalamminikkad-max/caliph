@@ -47,3 +47,8 @@
 [x] 47. Modified downloadAbsentStudentsPDF to show prayer at top and all classes (not just those with absences) - COMPLETE
 [x] 48. Modified shareToWhatsApp to match new format structure - COMPLETE
 [x] 49. Workflow restarted successfully with new format changes - COMPLETE
+[x] 50. Add date information to both PDF and WhatsApp messages - COMPLETE
+[x] 51. Change "All present" to "All students are present" in both PDF and WhatsApp - COMPLETE
+[x] 52. Capitalize prayer names (Fajr, Dhuhr, etc.) in both PDF and WhatsApp - COMPLETE
+[x] 53. Update PDF filename to use capitalized prayer name - COMPLETE
+[x] 54. Workflow restarted with enhanced date and text formatting - COMPLETE

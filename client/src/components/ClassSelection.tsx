@@ -225,6 +225,12 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
   const shareToWhatsApp = () => {
     const currentDate = new Date();
     const todayDate = currentDate.toISOString().split("T")[0];
+    const todayDateFormatted = currentDate.toLocaleDateString("en-US", { 
+      weekday: "long", 
+      month: "long", 
+      day: "numeric", 
+      year: "numeric" 
+    });
 
     // Filter for TODAY's absent students only
     const absentRecords = allAttendance.filter(
@@ -246,15 +252,19 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
     // Sort class names alphabetically
     const sortedClasses = classes.map(c => c.name).sort();
 
+    // Capitalize first letter of prayer name
+    const prayerName = prayer.charAt(0).toUpperCase() + prayer.slice(1);
+
     // Format the message
-    let message = `*${prayer}*\n`;
+    let message = `*${prayerName}*\n`;
+    message += `${todayDateFormatted}\n\n`;
 
     sortedClasses.forEach((className) => {
       message += `${className}\n`;
       
       const absentStudents = absentByClass[className];
       if (!absentStudents || absentStudents.length === 0) {
-        message += `All present\n`;
+        message += `All students are present\n`;
       } else {
         absentStudents.forEach((studentName) => {
           message += `${studentName}\n`;
@@ -278,6 +288,12 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
     const doc = new jsPDF();
     const currentDate = new Date();
     const todayDate = currentDate.toISOString().split("T")[0];
+    const todayDateFormatted = currentDate.toLocaleDateString("en-US", { 
+      weekday: "long", 
+      month: "long", 
+      day: "numeric", 
+      year: "numeric" 
+    });
 
     // Filter for TODAY's absent students only
     const absentRecords = allAttendance.filter(
@@ -299,6 +315,9 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
     // Sort class names alphabetically
     const sortedClasses = classes.map(c => c.name).sort();
 
+    // Capitalize first letter of prayer name
+    const prayerName = prayer.charAt(0).toUpperCase() + prayer.slice(1);
+
     // Starting Y position
     let yPosition = 20;
     doc.setFontSize(14);
@@ -306,11 +325,16 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
     doc.setFont("helvetica", "bold");
 
     // Prayer name at the top
-    doc.text(prayer, 20, yPosition);
+    doc.text(prayerName, 20, yPosition);
+    yPosition += 8;
+
+    // Date
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(todayDateFormatted, 20, yPosition);
     yPosition += 10;
 
     doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
 
     // Loop through ALL classes
     sortedClasses.forEach((className) => {
@@ -326,9 +350,9 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       doc.text(className, 20, yPosition);
       yPosition += 7;
 
-      // Either "All present" or list of absent students
+      // Either "All students are present" or list of absent students
       if (!absentStudents || absentStudents.length === 0) {
-        doc.text("All present", 20, yPosition);
+        doc.text("All students are present", 20, yPosition);
         yPosition += 6;
       } else {
         absentStudents.forEach((studentName) => {
@@ -343,7 +367,7 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       }
     });
 
-    doc.save(`${prayer}_Attendance_${currentDate.toISOString().split("T")[0]}.pdf`);
+    doc.save(`${prayerName}_Attendance_${currentDate.toISOString().split("T")[0]}.pdf`);
 
     toast({
       title: "✅ PDF Downloaded",
