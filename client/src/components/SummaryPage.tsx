@@ -168,6 +168,52 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
     setExpandedPrayers(newExpanded);
   };
 
+  // Share to WhatsApp
+  const shareToWhatsApp = (selectedPrayer?: string) => {
+    const currentDate = new Date();
+    const todayDateFormatted = currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    
+    // Filter prayers based on selection
+    const prayersToInclude = selectedPrayer && selectedPrayer !== "all"
+      ? prayerAbsentStudents.filter(p => p.prayer === selectedPrayer)
+      : prayerAbsentStudents;
+    
+    const totalAbsentToday = prayersToInclude.reduce((sum, p) => sum + p.absentStudents.length, 0);
+    
+    // Format the message
+    let message = `*📋 TODAY'S ABSENT STUDENTS*\n`;
+    message += `📅 Date: ${todayDateFormatted}\n`;
+    message += `👥 Total Absent: ${totalAbsentToday}\n`;
+    message += `\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+    
+    prayersToInclude.forEach((prayerData) => {
+      message += `*🕌 ${prayerData.prayer.toUpperCase()}* - ${prayerData.absentStudents.length} Absent\n`;
+      
+      if (prayerData.absentStudents.length === 0) {
+        message += `✅ No absent students\n\n`;
+      } else {
+        prayerData.absentStudents.forEach((student, idx) => {
+          message += `${idx + 1}. ${student.name} (${student.className})`;
+          if (student.reason) {
+            message += ` - ${student.reason}`;
+          }
+          message += `\n`;
+        });
+        message += `\n`;
+      }
+    });
+    
+    message += `━━━━━━━━━━━━━━━━━━━━\n`;
+    message += `📱 Caliph Attendance System`;
+    
+    // Encode the message for URL
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Open WhatsApp with the pre-filled message
+    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+    setShowPrayerSelectionDialog(false);
+  };
+
   // Generate All Class Summary PDF
   const generateAllClassSummaryPDF = (selectedPrayer?: string) => {
     const doc = new jsPDF();
@@ -846,29 +892,44 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
 
       {/* Prayer Selection Dialog */}
       <Dialog open={showPrayerSelectionDialog} onOpenChange={setShowPrayerSelectionDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-extrabold text-emerald-600 flex items-center gap-2">
               <span className="material-icons">mosque</span>
-              Select Prayer
+              Select Prayer & Action
             </DialogTitle>
             <DialogDescription>
-              Choose a specific prayer to download absent students, or select "All Prayers" to download the complete report.
+              Choose a specific prayer and download PDF or share via WhatsApp
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-4">
-            <Button
-              onClick={() => generateAllClassSummaryPDF("all")}
-              className="w-full justify-start text-left h-auto py-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-2 border-emerald-200 hover:border-emerald-400"
-              data-testid="button-download-all-prayers"
-            >
-              <span className="material-icons mr-3 text-2xl">list_alt</span>
-              <div className="flex-1">
-                <div className="font-extrabold text-base">All Prayers</div>
-                <div className="text-xs font-semibold text-emerald-600">Download complete report with all 5 prayers</div>
+            <div className="border-2 border-emerald-200 rounded-lg p-3 bg-emerald-50/50">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="material-icons text-emerald-600">list_alt</span>
+                <div className="flex-1">
+                  <div className="font-extrabold text-base text-emerald-700">All Prayers</div>
+                  <div className="text-xs font-semibold text-emerald-600">Complete report with all 5 prayers</div>
+                </div>
               </div>
-              <span className="material-icons text-emerald-600">download</span>
-            </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => generateAllClassSummaryPDF("all")}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  data-testid="button-download-all-prayers"
+                >
+                  <span className="material-icons mr-2 text-base">download</span>
+                  <span className="text-sm font-bold">PDF</span>
+                </Button>
+                <Button
+                  onClick={() => shareToWhatsApp("all")}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                  data-testid="button-whatsapp-all-prayers"
+                >
+                  <span className="text-base mr-2">📱</span>
+                  <span className="text-sm font-bold">WhatsApp</span>
+                </Button>
+              </div>
+            </div>
             
             <div className="border-t pt-3">
               <p className="text-sm font-bold text-gray-600 mb-3">Individual Prayer Reports:</p>
@@ -878,21 +939,37 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
                   const absentCount = prayerData?.absentStudents.length || 0;
                   
                   return (
-                    <Button
-                      key={prayer}
-                      onClick={() => generateAllClassSummaryPDF(prayer)}
-                      className="w-full justify-start text-left h-auto py-3 bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200 hover:border-emerald-400"
-                      data-testid={`button-download-${prayer.toLowerCase()}`}
-                    >
-                      <span className="material-icons mr-3 text-xl text-emerald-600">mosque</span>
-                      <div className="flex-1">
-                        <div className="font-extrabold text-sm">{prayer}</div>
-                        <div className="text-xs font-semibold text-gray-500">
-                          {absentCount} {absentCount === 1 ? 'student' : 'students'} absent
+                    <div key={prayer} className="border rounded-lg p-2 bg-white">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="material-icons text-lg text-emerald-600">mosque</span>
+                        <div className="flex-1">
+                          <div className="font-extrabold text-sm">{prayer}</div>
+                          <div className="text-xs font-semibold text-gray-500">
+                            {absentCount} {absentCount === 1 ? 'student' : 'students'} absent
+                          </div>
                         </div>
                       </div>
-                      <span className="material-icons text-gray-400">download</span>
-                    </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => generateAllClassSummaryPDF(prayer)}
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700"
+                          size="sm"
+                          data-testid={`button-download-${prayer.toLowerCase()}`}
+                        >
+                          <span className="material-icons mr-1 text-sm">download</span>
+                          <span className="text-xs font-bold">PDF</span>
+                        </Button>
+                        <Button
+                          onClick={() => shareToWhatsApp(prayer)}
+                          className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                          size="sm"
+                          data-testid={`button-whatsapp-${prayer.toLowerCase()}`}
+                        >
+                          <span className="text-sm mr-1">📱</span>
+                          <span className="text-xs font-bold">WhatsApp</span>
+                        </Button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
