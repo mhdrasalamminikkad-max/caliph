@@ -1,5 +1,11 @@
 {
-  "classes": {},
+  "classes": {
+    "4db3e1fa-c616-4a8f-b110-3c9a60a249ba": {
+      "name": "tf",
+      "id": "4db3e1fa-c616-4a8f-b110-3c9a60a249ba",
+      "createdAt": "2025-11-25T17:13:34.951Z"
+    }
+  },
   "students": {},
   "attendance": {},
   "users": {

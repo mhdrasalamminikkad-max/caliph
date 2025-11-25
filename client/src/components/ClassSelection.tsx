@@ -289,70 +289,85 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       }
     );
 
-    const absentStudents = absentRecords.map(record => ({
-      name: record.studentName,
-      className: record.className,
-      date: record.date,
-      reason: record.reason
-    }));
+    // Group absent students by class
+    const studentsByClass: Record<string, Array<{ name: string; reason?: string }>> = {};
+    absentRecords.forEach(record => {
+      if (!studentsByClass[record.className]) {
+        studentsByClass[record.className] = [];
+      }
+      studentsByClass[record.className].push({
+        name: record.studentName,
+        reason: record.reason
+      });
+    });
 
-    doc.setFontSize(24);
+    // Sort class names alphabetically
+    const sortedClasses = Object.keys(studentsByClass).sort();
+
+    // Title
+    doc.setFontSize(20);
     doc.setTextColor(0, 200, 83);
-    doc.text(`${prayer.toUpperCase()} - TODAY'S ABSENT STUDENTS`, 105, 30, { align: "center" });
-
-    doc.setFontSize(16);
-    doc.setTextColor(0, 0, 0);
-    doc.text("Daily Absent Students Report", 105, 40, { align: "center" });
-
-    doc.setFontSize(14);
-    doc.text(`Report Date: ${currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, 105, 50, { align: "center" });
+    doc.text(`${prayer.toUpperCase()} - ABSENT STUDENTS`, 105, 20, { align: "center" });
 
     doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Total Absent Today: ${absentStudents.length}`, 14, 65);
+    doc.setTextColor(100, 100, 100);
+    doc.text(currentDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }), 105, 28, { align: "center" });
 
-    if (absentStudents.length === 0) {
+    // Starting Y position for content
+    let yPosition = 45;
+
+    if (sortedClasses.length === 0) {
       doc.setFontSize(14);
       doc.setTextColor(0, 150, 0);
-      doc.text("No absent students for this prayer", 105, 90, { align: "center" });
+      doc.text("✓ No absent students for this prayer", 105, yPosition, { align: "center" });
     } else {
-      const tableData = absentStudents.map((student, idx) => [
-        (idx + 1).toString(),
-        student.name,
-        student.className,
-        new Date(student.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-        student.reason || "-"
-      ]);
+      // Loop through each class
+      sortedClasses.forEach((className, classIndex) => {
+        const students = studentsByClass[className];
 
-      autoTable(doc, {
-        startY: 75,
-        head: [["#", "Student Name", "Class", "Date", "Reason"]],
-        body: tableData,
-        theme: "striped",
-        headStyles: {
-          fillColor: [220, 38, 38],
-          fontSize: 10,
-          fontStyle: "bold",
-          textColor: [255, 255, 255]
-        },
-        styles: { fontSize: 9 },
-        columnStyles: {
-          0: { cellWidth: 10 },
-          1: { cellWidth: 50 },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 35 },
-          4: { cellWidth: 55 },
-        },
+        // Check if we need a new page
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        // Class name (bold and larger)
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "bold");
+        doc.text(className, 20, yPosition);
+        yPosition += 8;
+
+        // Student names
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(60, 60, 60);
+
+        students.forEach((student, studentIndex) => {
+          // Check if we need a new page
+          if (yPosition > 270) {
+            doc.addPage();
+            yPosition = 20;
+          }
+
+          const studentText = `  ${studentIndex + 1}. ${student.name}${student.reason ? ` - ${student.reason}` : ''}`;
+          doc.text(studentText, 25, yPosition);
+          yPosition += 6;
+        });
+
+        // Add spacing between classes
+        yPosition += 5;
       });
     }
 
+    // Footer with page numbers
     const pageCount = (doc as any).internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(9);
-      doc.setTextColor(128, 128, 128);
+      doc.setTextColor(150, 150, 150);
       doc.text(
-        `Page ${i} of ${pageCount} - Caliph Attendance System`,
+        `Page ${i} of ${pageCount} | Caliph Attendance System`,
         105,
         285,
         { align: "center" }
