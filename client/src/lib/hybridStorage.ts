@@ -65,7 +65,7 @@ async function isBackendAvailable(): Promise<boolean> {
 }
 
 /**
- * Save attendance record - INSTANT with LocalStorage, background sync to backend
+ * Save attendance record - INSTANT with LocalStorage, reliable backend sync
  */
 export async function saveAttendanceLocal(record: AttendanceRecord): Promise<void> {
   try {
@@ -75,7 +75,7 @@ export async function saveAttendanceLocal(record: AttendanceRecord): Promise<voi
       timestamp: record.timestamp || new Date().toISOString(),
     };
     
-    // INSTANT save to LocalStorage FIRST (no waiting for backend)
+    // INSTANT save to LocalStorage FIRST for immediate UI update
     const storedData = localStorage.getItem(STORAGE_KEY);
     const existingRecords: AttendanceRecord[] = storedData ? JSON.parse(storedData) : [];
     const recordIndex = existingRecords.findIndex(
@@ -91,10 +91,13 @@ export async function saveAttendanceLocal(record: AttendanceRecord): Promise<voi
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existingRecords));
     
-    // Background sync to backend (fire and forget - don't wait)
-    backendApi.saveAttendance(recordWithTimestamp).catch(() => {
-      // Silent fail - LocalStorage is source of truth
-    });
+    // Sync to backend (await to ensure data integrity, but LocalStorage already saved)
+    try {
+      await backendApi.saveAttendance(recordWithTimestamp);
+    } catch (error) {
+      console.warn('⚠️ Backend sync failed (data preserved in LocalStorage):', error);
+      // Data is safe in LocalStorage, will retry on next online event
+    }
   } catch (error) {
     console.error("❌ Error saving attendance:", error);
     throw error;
@@ -102,13 +105,13 @@ export async function saveAttendanceLocal(record: AttendanceRecord): Promise<voi
 }
 
 /**
- * Batch save multiple attendance records - INSTANT with LocalStorage, background sync to backend
+ * Batch save multiple attendance records - INSTANT with LocalStorage, reliable backend sync
  */
 export async function saveAttendanceBatch(records: AttendanceRecord[]): Promise<void> {
   if (records.length === 0) return;
   
   try {
-    // INSTANT save to LocalStorage FIRST (no waiting)
+    // INSTANT save to LocalStorage FIRST for immediate UI update
     const storedData = localStorage.getItem(STORAGE_KEY);
     const existingRecords: AttendanceRecord[] = storedData ? JSON.parse(storedData) : [];
     const existingMap = new Map(
@@ -127,16 +130,23 @@ export async function saveAttendanceBatch(records: AttendanceRecord[]): Promise<
     const updatedRecords = Array.from(existingMap.values());
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedRecords));
     
-    // Background sync to backend (fire and forget - don't wait)
-    Promise.all(records.map(record => {
-      const recordWithTimestamp = {
-        ...record,
-        timestamp: record.timestamp || new Date().toISOString(),
-      };
-      return backendApi.saveAttendance(recordWithTimestamp);
-    })).catch(() => {
-      // Silent fail - LocalStorage is source of truth
-    });
+    // Sync to backend (await but with small batches to avoid overwhelming)
+    try {
+      const batchSize = 10;
+      for (let i = 0; i < records.length; i += batchSize) {
+        const batch = records.slice(i, i + batchSize);
+        await Promise.all(batch.map(record => {
+          const recordWithTimestamp = {
+            ...record,
+            timestamp: record.timestamp || new Date().toISOString(),
+          };
+          return backendApi.saveAttendance(recordWithTimestamp);
+        }));
+      }
+    } catch (error) {
+      console.warn('⚠️ Backend batch sync failed (data preserved in LocalStorage):', error);
+      // Data is safe in LocalStorage, will retry on next online event
+    }
   } catch (error) {
     console.error("❌ Error batch saving attendance:", error);
     throw error;
@@ -144,30 +154,59 @@ export async function saveAttendanceBatch(records: AttendanceRecord[]): Promise<
 }
 
 /**
- * Get all attendance records - INSTANT from LocalStorage (no backend wait)
+ * Get all attendance records - INSTANT from LocalStorage, background backend merge
  */
 export async function getLocalAttendance(): Promise<AttendanceRecord[]> {
   try {
-    // INSTANT read from LocalStorage (no backend check)
+    // INSTANT read from LocalStorage first
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return [];
+    const localRecords: AttendanceRecord[] = stored ? JSON.parse(stored) : [];
     
-    const allRecords: AttendanceRecord[] = JSON.parse(stored);
-    
-    // Deduplicate: Keep only the latest record for each student-date-prayer combination
+    // Deduplicate local records
     const recordMap = new Map<string, AttendanceRecord>();
-    
-    allRecords.forEach(record => {
+    localRecords.forEach(record => {
       const key = `${record.studentId}-${record.date}-${record.prayer}`;
       const existing = recordMap.get(key);
       
-      // Keep the record with the latest timestamp
       if (!existing || new Date(record.timestamp) > new Date(existing.timestamp)) {
         recordMap.set(key, record);
       }
     });
     
-    return Array.from(recordMap.values());
+    const deduplicatedLocal = Array.from(recordMap.values());
+    
+    // Background merge with backend data (non-blocking - fire and forget)
+    backendApi.getAttendance()
+      .then(backendRecords => {
+        if (backendRecords && backendRecords.length > 0) {
+          // Merge: combine local and backend, keeping latest timestamp
+          const mergeMap = new Map<string, AttendanceRecord>();
+          
+          // Add all records (both local and backend)
+          [...localRecords, ...backendRecords].forEach(record => {
+            const key = `${record.studentId}-${record.date}-${record.prayer}`;
+            const existing = mergeMap.get(key);
+            
+            // Keep the record with the latest timestamp
+            if (!existing || new Date(record.timestamp || 0) > new Date(existing.timestamp || 0)) {
+              mergeMap.set(key, {
+                ...record,
+                timestamp: record.timestamp || new Date().toISOString()
+              });
+            }
+          });
+          
+          const mergedRecords = Array.from(mergeMap.values());
+          // Update LocalStorage with merged data for next instant read
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedRecords));
+        }
+      })
+      .catch(() => {
+        // Silent fail - backend unavailable, local data is already returned
+      });
+    
+    // Return local data immediately (INSTANT)
+    return deduplicatedLocal;
   } catch (error) {
     console.error("❌ Error reading from LocalStorage:", error);
     return [];

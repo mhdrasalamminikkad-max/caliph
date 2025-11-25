@@ -255,14 +255,14 @@ export async function syncStudentsToFirestore(): Promise<void> {
       throw new Error("Max retries exceeded");
     };
 
-    // Sync students INSTANTLY in parallel
-    const batchSize = 20; // Larger batches for faster sync
+    // Sync students with optimized batch size
+    const batchSize = 5; // Balanced for performance and rate limits
     
     for (let i = 0; i < students.length; i += batchSize) {
       const batch = students.slice(i, i + batchSize);
       
-      // Process batch in parallel (no delay)
-      await Promise.allSettled(batch.map(async (student) => {
+      // Process batch in parallel with proper error handling
+      const results = await Promise.allSettled(batch.map(async (student) => {
         try {
           if (!databases) throw new Error("Databases not available");
           
@@ -332,13 +332,24 @@ export async function syncStudentsToFirestore(): Promise<void> {
             });
           });
           
-          // NO DELAY - instant sync
         } catch (error: any) {
-          // Silent fail - will retry later if needed
+          const isRateLimited = 
+            error.code === 429 || 
+            error.response?.code === 429 ||
+            error.message?.includes('rate limit');
+          
+          if (isRateLimited) {
+            console.warn(`⚠️ Rate limited syncing student ${student.name} - will retry later`);
+          }
+          throw error; // Re-throw so Promise.allSettled catches it
         }
       }));
       
-      // NO DELAY between batches - instant sync
+      // Log any failures for monitoring
+      const failedCount = results.filter(r => r.status === 'rejected').length;
+      if (failedCount > 0) {
+        console.warn(`⚠️ ${failedCount}/${batch.length} students failed to sync in this batch - data preserved locally`);
+      }
     }
 
     console.log(`✅ Synced ${students.length} student(s) to Appwrite`);
