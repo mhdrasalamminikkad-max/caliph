@@ -1,0 +1,26 @@
+# Render configuration for backend deployment
+services:
+  - type: web
+    name: caliph-attendance-api
+    env: node
+    plan: free
+    region: oregon # or singapore for closer to your location
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+    # Health check to prevent cold starts
+    healthCheckPath: /api/classes
+    # Persistent disk for data storage - CRITICAL!
+    disk:
+      name: attendance-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
+    # Auto-deploy on push
+    autoDeploy: true
+    # Keep service alive (prevents cold start issues)
+    initialDelaySeconds: 30
+

@@ -1,0 +1,72 @@
+{
+  "classes": {
+    "3e75fd96-2d07-494f-9a02-49fd5dfc7112": {
+      "name": "qde",
+      "id": "3e75fd96-2d07-494f-9a02-49fd5dfc7112",
+      "createdAt": "2025-11-01T17:00:44.297Z"
+    },
+    "fdf015b6-06ee-47f6-a562-7c6bb495660e": {
+      "name": "ddd",
+      "id": "fdf015b6-06ee-47f6-a562-7c6bb495660e",
+      "createdAt": "2025-11-01T17:51:44.216Z"
+    }
+  },
+  "students": {
+    "e6853ca2-0ca4-45cc-a898-f9206d057e5a": {
+      "name": "ddd",
+      "className": "ddd",
+      "id": "e6853ca2-0ca4-45cc-a898-f9206d057e5a"
+    },
+    "36547acd-ff65-4696-b901-fb351e332041": {
+      "name": "f",
+      "className": "ddd",
+      "id": "36547acd-ff65-4696-b901-fb351e332041"
+    }
+  },
+  "attendance": {
+    "396ad0e6-6865-4263-aa68-e3d8b280d1c7": {
+      "studentId": "e6853ca2-0ca4-45cc-a898-f9206d057e5a",
+      "studentName": "ddd",
+      "className": "ddd",
+      "prayer": "Fajr",
+      "date": "2025-11-01",
+      "status": "present",
+      "id": "396ad0e6-6865-4263-aa68-e3d8b280d1c7",
+      "reason": null,
+      "timestamp": "2025-11-01T17:52:11.064Z"
+    },
+    "8b30d7ff-9dc7-44dc-b8e1-039a623a0007": {
+      "studentId": "36547acd-ff65-4696-b901-fb351e332041",
+      "studentName": "f",
+      "className": "ddd",
+      "prayer": "Fajr",
+      "date": "2025-11-01",
+      "status": "present",
+      "id": "8b30d7ff-9dc7-44dc-b8e1-039a623a0007",
+      "reason": null,
+      "timestamp": "2025-11-01T17:52:11.071Z"
+    },
+    "6c049d1a-7bb4-4d70-8334-0a8cde3b38fa": {
+      "studentId": "e6853ca2-0ca4-45cc-a898-f9206d057e5a",
+      "studentName": "ddd",
+      "className": "ddd",
+      "prayer": "Dhuhr",
+      "date": "2025-11-01",
+      "status": "present",
+      "id": "6c049d1a-7bb4-4d70-8334-0a8cde3b38fa",
+      "reason": null,
+      "timestamp": "2025-11-01T17:52:47.335Z"
+    },
+    "d56de5bd-92e3-4915-827b-40e863246c3b": {
+      "studentId": "36547acd-ff65-4696-b901-fb351e332041",
+      "studentName": "f",
+      "className": "ddd",
+      "prayer": "Dhuhr",
+      "date": "2025-11-01",
+      "status": "absent",
+      "reason": "illed\n",
+      "id": "d56de5bd-92e3-4915-827b-40e863246c3b",
+      "timestamp": "2025-11-01T17:52:47.342Z"
+    }
+  }
+}

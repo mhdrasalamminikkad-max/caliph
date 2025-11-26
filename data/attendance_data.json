@@ -1,0 +1,413 @@
+{
+  "classes": {
+    "4031a550-6cdf-4be4-af91-e9b787eee90c": {
+      "name": "c1c",
+      "id": "4031a550-6cdf-4be4-af91-e9b787eee90c",
+      "createdAt": "2025-11-26T11:14:05.245Z"
+    }
+  },
+  "students": {
+    "0da57e09-bba7-42e1-a1d6-518c558fc2c6": {
+      "name": "ABDUL AHAD SHAREEF",
+      "rollNumber": "1",
+      "className": "c1c",
+      "id": "0da57e09-bba7-42e1-a1d6-518c558fc2c6"
+    },
+    "f8f88909-7180-4ef1-b060-3e002b4ea2fd": {
+      "name": "BISHRUL HAFI",
+      "rollNumber": "2",
+      "className": "c1c",
+      "id": "f8f88909-7180-4ef1-b060-3e002b4ea2fd"
+    },
+    "7668e3ab-991e-4fa1-9d90-8d718ccb7074": {
+      "name": "FARZEEN AHAMMED",
+      "rollNumber": "3",
+      "className": "c1c",
+      "id": "7668e3ab-991e-4fa1-9d90-8d718ccb7074"
+    },
+    "562ee315-ea14-4b7f-94f4-551cca6d1551": {
+      "name": "HADI MUHAMMED",
+      "rollNumber": "4",
+      "className": "c1c",
+      "id": "562ee315-ea14-4b7f-94f4-551cca6d1551"
+    },
+    "7449ccb8-1fd0-4d2d-ba62-78d4969097db": {
+      "name": "HADI MUHAMMED NADUKKANDI",
+      "rollNumber": "5",
+      "className": "c1c",
+      "id": "7449ccb8-1fd0-4d2d-ba62-78d4969097db"
+    },
+    "9e6851a5-4aaa-4ba4-b680-721d7709d812": {
+      "name": "K M MUHAMMED ANSAF",
+      "rollNumber": "6",
+      "className": "c1c",
+      "id": "9e6851a5-4aaa-4ba4-b680-721d7709d812"
+    },
+    "eb895223-34c1-40d7-a751-2620fa39e553": {
+      "name": "MAZHAR THAHA",
+      "rollNumber": "7",
+      "className": "c1c",
+      "id": "eb895223-34c1-40d7-a751-2620fa39e553"
+    },
+    "ec8fa17d-294d-4672-b2c5-dc8b604d7485": {
+      "name": "MD RIZA BAHLUL KOZHIKKATTIL",
+      "rollNumber": "8",
+      "className": "c1c",
+      "id": "ec8fa17d-294d-4672-b2c5-dc8b604d7485"
+    },
+    "16389c4b-82bc-47cd-b524-26835179cfba": {
+      "name": "MIFZAL MOHAMED",
+      "rollNumber": "9",
+      "className": "c1c",
+      "id": "16389c4b-82bc-47cd-b524-26835179cfba"
+    },
+    "b3ccef09-b001-4bed-ade3-9857b5170d03": {
+      "name": "MOHAMMED SINAN ANGILLATH",
+      "rollNumber": "10",
+      "className": "c1c",
+      "id": "b3ccef09-b001-4bed-ade3-9857b5170d03"
+    },
+    "15cc69f2-0038-4ccf-9366-82c7eee3e211": {
+      "name": "MUHAMMED FIRAS KARI",
+      "rollNumber": "11",
+      "className": "c1c",
+      "id": "15cc69f2-0038-4ccf-9366-82c7eee3e211"
+    },
+    "9aa054a8-7246-4a47-9559-29e5c25a98ac": {
+      "name": "MUHAMMED NADHISH",
+      "rollNumber": "12",
+      "className": "c1c",
+      "id": "9aa054a8-7246-4a47-9559-29e5c25a98ac"
+    },
+    "a4a1efdf-56e0-46d4-b755-de2527a51fd1": {
+      "name": "MUHAMMED NAJAH M C",
+      "rollNumber": "13",
+      "className": "c1c",
+      "id": "a4a1efdf-56e0-46d4-b755-de2527a51fd1"
+    },
+    "5e14ecbb-995d-45cb-ab0b-4fc3e8de94e3": {
+      "name": "MUHAMMED RAMZY K K",
+      "rollNumber": "14",
+      "className": "c1c",
+      "id": "5e14ecbb-995d-45cb-ab0b-4fc3e8de94e3"
+    },
+    "c0f60508-6814-4fdf-b2cf-bfccf7550f70": {
+      "name": "MUHAMMED RASEEM K",
+      "rollNumber": "15",
+      "className": "c1c",
+      "id": "c0f60508-6814-4fdf-b2cf-bfccf7550f70"
+    },
+    "cb95110a-8b05-44dd-94c5-f78d5db00c22": {
+      "name": "MUHAMMED SHADIN",
+      "rollNumber": "16",
+      "className": "c1c",
+      "id": "cb95110a-8b05-44dd-94c5-f78d5db00c22"
+    },
+    "ff66bd8b-b7ee-4550-9e55-792a9b057533": {
+      "name": "MUHAMMED SHAFI T S",
+      "rollNumber": "17",
+      "className": "c1c",
+      "id": "ff66bd8b-b7ee-4550-9e55-792a9b057533"
+    },
+    "83e622e0-53f4-4d9a-953d-eb6531ad7996": {
+      "name": "MUHAMMED YASEEN M",
+      "rollNumber": "18",
+      "className": "c1c",
+      "id": "83e622e0-53f4-4d9a-953d-eb6531ad7996"
+    },
+    "861fad2b-802c-4ea7-a193-ddeeb66ea81b": {
+      "name": "NAJWAN NOUSHAD",
+      "rollNumber": "19",
+      "className": "c1c",
+      "id": "861fad2b-802c-4ea7-a193-ddeeb66ea81b"
+    },
+    "d98a46c2-4e78-4368-a24e-47043f0d5298": {
+      "name": "NASHIM MUHAMMED N",
+      "rollNumber": "20",
+      "className": "c1c",
+      "id": "d98a46c2-4e78-4368-a24e-47043f0d5298"
+    },
+    "0f96e18f-7fe1-486b-9c9c-c4757a0a05f7": {
+      "name": "RAIHAN ABDUL RASHEED.A",
+      "rollNumber": "21",
+      "className": "c1c",
+      "id": "0f96e18f-7fe1-486b-9c9c-c4757a0a05f7"
+    },
+    "48444713-462f-42f4-8f4b-2f74d8d98970": {
+      "name": "UMAR ABDULLAH SULFIKER",
+      "rollNumber": "22",
+      "className": "c1c",
+      "id": "48444713-462f-42f4-8f4b-2f74d8d98970"
+    },
+    "55224ba3-1161-4127-87f7-9da510667b63": {
+      "name": "YAFIS ZAHARAN",
+      "rollNumber": "23",
+      "className": "c1c",
+      "id": "55224ba3-1161-4127-87f7-9da510667b63"
+    }
+  },
+  "attendance": {
+    "0226b1a0-44f6-4077-8213-44c385f95e56": {
+      "studentId": "f8f88909-7180-4ef1-b060-3e002b4ea2fd",
+      "studentName": "BISHRUL HAFI",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "absent",
+      "reason": "",
+      "id": "0226b1a0-44f6-4077-8213-44c385f95e56",
+      "timestamp": "2025-11-26T11:14:41.723Z"
+    },
+    "cc19ad9b-c37f-47a5-8086-2cb10ed4c002": {
+      "studentId": "0da57e09-bba7-42e1-a1d6-518c558fc2c6",
+      "studentName": "ABDUL AHAD SHAREEF",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "absent",
+      "reason": "",
+      "id": "cc19ad9b-c37f-47a5-8086-2cb10ed4c002",
+      "timestamp": "2025-11-26T11:14:41.726Z"
+    },
+    "4bbda1d5-6c56-43c1-9a46-2e5acfe40589": {
+      "studentId": "7668e3ab-991e-4fa1-9d90-8d718ccb7074",
+      "studentName": "FARZEEN AHAMMED",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "absent",
+      "reason": "",
+      "id": "4bbda1d5-6c56-43c1-9a46-2e5acfe40589",
+      "timestamp": "2025-11-26T11:14:41.733Z"
+    },
+    "8547375b-f5bc-492b-9d69-8f1b5964a197": {
+      "studentId": "7449ccb8-1fd0-4d2d-ba62-78d4969097db",
+      "studentName": "HADI MUHAMMED NADUKKANDI",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "8547375b-f5bc-492b-9d69-8f1b5964a197",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:41.736Z"
+    },
+    "5ea66214-460c-434b-a3a9-22132b20b5ed": {
+      "studentId": "562ee315-ea14-4b7f-94f4-551cca6d1551",
+      "studentName": "HADI MUHAMMED",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "absent",
+      "reason": "",
+      "id": "5ea66214-460c-434b-a3a9-22132b20b5ed",
+      "timestamp": "2025-11-26T11:14:41.739Z"
+    },
+    "65fa2297-8dab-4202-900f-bfbf567ea3e4": {
+      "studentId": "9e6851a5-4aaa-4ba4-b680-721d7709d812",
+      "studentName": "K M MUHAMMED ANSAF",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "65fa2297-8dab-4202-900f-bfbf567ea3e4",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:41.742Z"
+    },
+    "d1a0630d-4d98-45d4-abcb-72ab27275348": {
+      "studentId": "eb895223-34c1-40d7-a751-2620fa39e553",
+      "studentName": "MAZHAR THAHA",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "d1a0630d-4d98-45d4-abcb-72ab27275348",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:41.983Z"
+    },
+    "17b7f2d2-69ae-40fa-b71b-4942f5a72c76": {
+      "studentId": "16389c4b-82bc-47cd-b524-26835179cfba",
+      "studentName": "MIFZAL MOHAMED",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "17b7f2d2-69ae-40fa-b71b-4942f5a72c76",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:41.994Z"
+    },
+    "89c3db9c-31bc-45cd-8ab9-a8dc124e6e98": {
+      "studentId": "ec8fa17d-294d-4672-b2c5-dc8b604d7485",
+      "studentName": "MD RIZA BAHLUL KOZHIKKATTIL",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "89c3db9c-31bc-45cd-8ab9-a8dc124e6e98",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:41.997Z"
+    },
+    "c99d06b5-e5c2-44b7-b247-1d3c9bffdd0c": {
+      "studentId": "b3ccef09-b001-4bed-ade3-9857b5170d03",
+      "studentName": "MOHAMMED SINAN ANGILLATH",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "c99d06b5-e5c2-44b7-b247-1d3c9bffdd0c",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:42.002Z"
+    },
+    "1652c3b4-92f2-4958-a1cf-bd84bd8141d6": {
+      "studentId": "15cc69f2-0038-4ccf-9366-82c7eee3e211",
+      "studentName": "MUHAMMED FIRAS KARI",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "1652c3b4-92f2-4958-a1cf-bd84bd8141d6",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:42.251Z"
+    },
+    "acb2f45f-37c5-481a-b131-fa8a13e3ab2a": {
+      "studentId": "5e14ecbb-995d-45cb-ab0b-4fc3e8de94e3",
+      "studentName": "MUHAMMED RAMZY K K",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "acb2f45f-37c5-481a-b131-fa8a13e3ab2a",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:42.524Z"
+    },
+    "8730e977-a5f0-4ce4-8b47-bf6ef5ebf88c": {
+      "studentId": "a4a1efdf-56e0-46d4-b755-de2527a51fd1",
+      "studentName": "MUHAMMED NAJAH M C",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "8730e977-a5f0-4ce4-8b47-bf6ef5ebf88c",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:42.526Z"
+    },
+    "5f5fd1c1-db9d-4ea4-bfa4-a7ee649a5bf7": {
+      "studentId": "9aa054a8-7246-4a47-9559-29e5c25a98ac",
+      "studentName": "MUHAMMED NADHISH",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "5f5fd1c1-db9d-4ea4-bfa4-a7ee649a5bf7",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:42.528Z"
+    },
+    "f6895d4b-e037-4258-89e8-a9ee3f1694a5": {
+      "studentId": "cb95110a-8b05-44dd-94c5-f78d5db00c22",
+      "studentName": "MUHAMMED SHADIN",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "f6895d4b-e037-4258-89e8-a9ee3f1694a5",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:42.530Z"
+    },
+    "ffc691cb-8537-453b-bc19-5fd81c15a5db": {
+      "studentId": "c0f60508-6814-4fdf-b2cf-bfccf7550f70",
+      "studentName": "MUHAMMED RASEEM K",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "ffc691cb-8537-453b-bc19-5fd81c15a5db",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:42.532Z"
+    },
+    "682d73e0-28b4-4c75-bc13-7dcac015ba18": {
+      "studentId": "ff66bd8b-b7ee-4550-9e55-792a9b057533",
+      "studentName": "MUHAMMED SHAFI T S",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "682d73e0-28b4-4c75-bc13-7dcac015ba18",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:42.534Z"
+    },
+    "49021ee9-573b-4731-ae6e-f2ce043b2f85": {
+      "studentId": "83e622e0-53f4-4d9a-953d-eb6531ad7996",
+      "studentName": "MUHAMMED YASEEN M",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "49021ee9-573b-4731-ae6e-f2ce043b2f85",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:42.824Z"
+    },
+    "7d912116-29c0-4f86-8cf5-1ca627645dc8": {
+      "studentId": "861fad2b-802c-4ea7-a193-ddeeb66ea81b",
+      "studentName": "NAJWAN NOUSHAD",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "7d912116-29c0-4f86-8cf5-1ca627645dc8",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:42.828Z"
+    },
+    "1243ea35-5f91-481a-aa75-f4fb8072f1aa": {
+      "studentId": "d98a46c2-4e78-4368-a24e-47043f0d5298",
+      "studentName": "NASHIM MUHAMMED N",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "1243ea35-5f91-481a-aa75-f4fb8072f1aa",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:42.831Z"
+    },
+    "3e029389-ed92-4a84-817f-31eb946bd622": {
+      "studentId": "48444713-462f-42f4-8f4b-2f74d8d98970",
+      "studentName": "UMAR ABDULLAH SULFIKER",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "3e029389-ed92-4a84-817f-31eb946bd622",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:43.443Z"
+    },
+    "135d223a-fde1-47cb-aa52-bdfe347b3ef0": {
+      "studentId": "55224ba3-1161-4127-87f7-9da510667b63",
+      "studentName": "YAFIS ZAHARAN",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "135d223a-fde1-47cb-aa52-bdfe347b3ef0",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:43.449Z"
+    },
+    "f8cf9f38-9bd8-4a6c-9150-0edca94ce902": {
+      "studentId": "0f96e18f-7fe1-486b-9c9c-c4757a0a05f7",
+      "studentName": "RAIHAN ABDUL RASHEED.A",
+      "className": "c1c",
+      "prayer": "Fajr",
+      "date": "2025-11-26",
+      "status": "present",
+      "id": "f8cf9f38-9bd8-4a6c-9150-0edca94ce902",
+      "reason": null,
+      "timestamp": "2025-11-26T11:14:43.453Z"
+    }
+  },
+  "users": {
+    "e7f474ee-b237-4076-a254-e0550e2d3e92": {
+      "id": "e7f474ee-b237-4076-a254-e0550e2d3e92",
+      "username": "user",
+      "password": "$2b$10$iX7iiBKggKCi5X.0nJGJxudPwYOfTQe7mgr/qC3Rw/OkgMe/8qx46",
+      "role": "admin",
+      "createdAt": "2025-11-25T16:44:56.222Z"
+    }
+  }
+}

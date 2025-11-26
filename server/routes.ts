@@ -1,0 +1,386 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { insertClassSchema, insertStudentSchema, insertAttendanceSchema, insertUserSchema } from "@shared/schema";
+import { requireAdmin } from "./middleware/auth";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Login route (public)
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      const user = await storage.verifyPassword(username, password);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+
+      // Return user data (excluding password) with userId as token
+      // In production, use proper JWT tokens
+      res.json({
+        token: user.id,
+        user: {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+        },
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  // Class routes
+  app.get("/api/classes", async (_req, res) => {
+    try {
+      const classes = await storage.getClasses();
+      res.json(classes);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/classes", async (req, res) => {
+    try {
+      const classData = insertClassSchema.parse(req.body);
+      const newClass = await storage.createClass(classData);
+      res.status(201).json(newClass);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/classes/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteClass(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Class not found" });
+      }
+      res.json({ message: "Class deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Student routes
+  app.get("/api/students/class/:className", async (req, res) => {
+    try {
+      const { className } = req.params;
+      const students = await storage.getStudentsByClass(className);
+      res.json(students);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/students", async (req, res) => {
+    try {
+      const studentData = insertStudentSchema.parse(req.body);
+      const newStudent = await storage.createStudent(studentData);
+      res.status(201).json(newStudent);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/students/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const studentData = insertStudentSchema.partial().parse(req.body);
+      const updatedStudent = await storage.updateStudent(id, studentData);
+      if (!updatedStudent) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      res.json(updatedStudent);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/students/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteStudent(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      res.json({ message: "Student deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Bulk student import (admin only)
+  app.post("/api/students/bulk", requireAdmin, async (req, res) => {
+    try {
+      const { students } = req.body;
+      
+      if (!Array.isArray(students) || students.length === 0) {
+        return res.status(400).json({ message: "Invalid request: students array is required" });
+      }
+
+      const createdStudents = [];
+      const errors = [];
+
+      for (const studentData of students) {
+        try {
+          const validatedData = insertStudentSchema.parse(studentData);
+          const newStudent = await storage.createStudent(validatedData);
+          createdStudents.push(newStudent);
+        } catch (error: any) {
+          errors.push({
+            student: studentData.name || "Unknown",
+            error: error.message,
+          });
+        }
+      }
+
+      res.status(201).json({
+        created: createdStudents.length,
+        failed: errors.length,
+        students: createdStudents,
+        errors: errors.length > 0 ? errors : undefined,
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Attendance routes
+  app.get("/api/attendance", async (req, res) => {
+    try {
+      const { date, prayer, className, studentId } = req.query;
+      
+      // If specific filters are provided, use them
+      if (date && prayer && className) {
+        const attendance = await storage.getAttendance(
+          date as string,
+          prayer as string,
+          className as string
+        );
+        res.json(attendance);
+      } else {
+        // Otherwise, return all attendance records (for summary page)
+        const allAttendance = await storage.getAllAttendance();
+        let filtered = allAttendance;
+        
+        // Apply optional filters
+        if (date) {
+          filtered = filtered.filter(a => a.date === date);
+        }
+        if (prayer) {
+          filtered = filtered.filter(a => a.prayer === prayer);
+        }
+        if (className) {
+          filtered = filtered.filter(a => a.className === className);
+        }
+        if (studentId) {
+          filtered = filtered.filter(a => a.studentId === studentId);
+        }
+        
+        res.json(filtered);
+      }
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/attendance", async (req, res) => {
+    try {
+      const attendanceData = insertAttendanceSchema.parse(req.body);
+      const newAttendance = await storage.markAttendance(attendanceData);
+      res.status(201).json(newAttendance);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/attendance/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const attendanceData = insertAttendanceSchema.partial().parse(req.body);
+      const updatedAttendance = await storage.updateAttendance(id, attendanceData);
+      if (!updatedAttendance) {
+        return res.status(404).json({ message: "Attendance record not found" });
+      }
+      res.json(updatedAttendance);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/attendance/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteAttendance(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Attendance record not found" });
+      }
+      res.json({ message: "Attendance deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Clear all attendance data (admin only)
+  app.delete("/api/attendance", requireAdmin, async (_req, res) => {
+    try {
+      const count = await storage.clearAllAttendance();
+      res.json({ 
+        message: "All attendance records cleared successfully", 
+        count 
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Clear all data (classes, students, attendance) - admin only
+  app.delete("/api/data/all", requireAdmin, async (_req, res) => {
+    try {
+      const result = await storage.clearAllData();
+      res.json({ 
+        message: "All data cleared successfully", 
+        ...result
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Clear all classes (admin only)
+  app.delete("/api/classes", requireAdmin, async (_req, res) => {
+    try {
+      const count = await storage.clearAllClasses();
+      res.json({ 
+        message: "All classes cleared successfully", 
+        count 
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Clear all students (admin only)
+  app.delete("/api/students", requireAdmin, async (_req, res) => {
+    try {
+      const count = await storage.clearAllStudents();
+      res.json({ 
+        message: "All students cleared successfully", 
+        count 
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get attendance by date range
+  app.get("/api/attendance/range", async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      if (!startDate || !endDate) {
+        return res.status(400).json({ message: "Start date and end date are required" });
+      }
+      const attendance = await storage.getAttendanceByDateRange(
+        startDate as string,
+        endDate as string
+      );
+      res.json(attendance);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get all students
+  app.get("/api/students", async (_req, res) => {
+    try {
+      const students = await storage.getAllStudents();
+      res.json(students);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get student attendance by ID
+  app.get("/api/students/:id/attendance", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { startDate, endDate } = req.query;
+      
+      let attendance;
+      if (startDate && endDate) {
+        const allAttendance = await storage.getAttendanceByDateRange(
+          startDate as string,
+          endDate as string
+        );
+        attendance = allAttendance.filter(att => att.studentId === id);
+      } else {
+        attendance = await storage.getStudentAttendance(id);
+      }
+      
+      res.json(attendance);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // User routes (protected - admin only)
+  app.get("/api/users", requireAdmin, async (_req, res) => {
+    try {
+      const users = await storage.getUsers();
+      // Remove passwords from response
+      const sanitizedUsers = users.map(({ password, ...user }) => user);
+      res.json(sanitizedUsers);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      const newUser = await storage.createUser(userData);
+      // Remove password from response
+      const { password, ...sanitizedUser } = newUser;
+      res.status(201).json(sanitizedUser);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/users/:id/role", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { role } = req.body;
+      if (!role || (role !== "admin" && role !== "teacher")) {
+        return res.status(400).json({ message: "Invalid role. Must be 'admin' or 'teacher'" });
+      }
+      const updatedUser = await storage.updateUserRole(id, role);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      // Remove password from response
+      const { password, ...sanitizedUser } = updatedUser;
+      res.json(sanitizedUser);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteUser(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ message: "User deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  const httpServer = createServer(app);
+
+  return httpServer;
+}

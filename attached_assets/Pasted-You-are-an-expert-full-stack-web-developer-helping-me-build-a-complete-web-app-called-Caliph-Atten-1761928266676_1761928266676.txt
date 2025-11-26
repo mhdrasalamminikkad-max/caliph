@@ -1,0 +1,60 @@
+You are an expert full-stack web developer helping me build a complete web app called **Caliph Attendance** for my Islamic school.
+
+🎯 Goal:
+Build a responsive website to track students’ attendance for daily prayers: Fajr, Dhuhr, Asr, Maghrib, and Isha.
+
+🕌 App Flow:
+1. When the app opens, show a splash/home screen with my Caliph logo and buttons for each prayer.
+2. When a user clicks a prayer (e.g. Dhuhr), show class options (like Grade 1, Grade 2, etc.).
+3. After selecting a class, show a student list.
+4. For each student, I can:
+   - Mark ✅ Present (auto)
+   - Mark ❌ Absent
+   - Add ✏️ Reason manually if absent.
+5. Automatically save attendance data with date and prayer.
+6. Show summaries:
+   - 📅 Daily summary (all classes)
+   - 📆 Weekly and monthly summary
+   - 👤 Individual student summary
+
+⚙️ Tech Stack:
+- Frontend: HTML, CSS, JavaScript (clean, modern UI)
+- Backend: Firebase (Realtime Database + Auth)
+- Hosting: Firebase Hosting
+- Design: Mobile-friendly (for teachers on phones)
+
+📂 Project Structure:
+Caliph-Attendance/
+├── index.html        → Home page (logo + prayer buttons)
+├── prayer.html       → Class & student list view
+├── summary.html      → Daily/weekly/monthly summaries
+│
+├── css/
+│   └── style.css
+│
+├── js/
+│   ├── main.js       → Navigation & UI
+│   ├── firebase.js   → Firebase config
+│   ├── attendance.js → Attendance logic
+│   └── reports.js    → Summaries
+│
+└── assets/
+    └── logo.png
+
+💡 Notes:
+- Use a green-gold color theme (Islamic elegant style)
+- Use Google Fonts: “Poppins” or “Cairo”
+- Make buttons big and touch-friendly
+- Keep code modular and commented
+- Create dummy data for students (for now)
+- Firebase should store: date, prayer, class, studentName, status, reason.
+
+🚀 Step-by-step Plan:
+1. Create the HTML/CSS layout with navigation.
+2. Add dummy student and class data.
+3. Implement attendance marking system.
+4. Connect Firebase for real data saving.
+5. Build summary and reporting features.
+6. Style and polish UI for a clean mobile experience.
+
+Now start coding this project from step 1.
