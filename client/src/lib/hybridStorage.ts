@@ -158,11 +158,25 @@ export async function saveAttendanceBatch(records: AttendanceRecord[]): Promise<
 }
 
 /**
- * Get all attendance records - INSTANT from LocalStorage, background backend merge
+ * Get all attendance records - prioritize backend when available
  */
 export async function getLocalAttendance(): Promise<AttendanceRecord[]> {
   try {
-    // INSTANT read from LocalStorage first
+    // Try to get from backend first (source of truth)
+    if (await isBackendAvailable()) {
+      try {
+        const backendRecords = await backendApi.getAttendance();
+        if (backendRecords) {
+          // Update LocalStorage with backend data
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(backendRecords));
+          return backendRecords;
+        }
+      } catch (error) {
+        console.warn('⚠️ Backend fetch failed, using LocalStorage:', error);
+      }
+    }
+    
+    // Fallback to LocalStorage
     const stored = localStorage.getItem(STORAGE_KEY);
     const localRecords: AttendanceRecord[] = stored ? JSON.parse(stored) : [];
     
@@ -177,42 +191,9 @@ export async function getLocalAttendance(): Promise<AttendanceRecord[]> {
       }
     });
     
-    const deduplicatedLocal = Array.from(recordMap.values());
-    
-    // Background merge with backend data (non-blocking - fire and forget)
-    backendApi.getAttendance()
-      .then(backendRecords => {
-        if (backendRecords && backendRecords.length > 0) {
-          // Merge: combine local and backend, keeping latest timestamp
-          const mergeMap = new Map<string, AttendanceRecord>();
-          
-          // Add all records (both local and backend)
-          [...localRecords, ...backendRecords].forEach(record => {
-            const key = `${record.studentId}-${record.date}-${record.prayer}`;
-            const existing = mergeMap.get(key);
-            
-            // Keep the record with the latest timestamp
-            if (!existing || new Date(record.timestamp || 0) > new Date(existing.timestamp || 0)) {
-              mergeMap.set(key, {
-                ...record,
-                timestamp: record.timestamp || new Date().toISOString()
-              });
-            }
-          });
-          
-          const mergedRecords = Array.from(mergeMap.values());
-          // Update LocalStorage with merged data for next instant read
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedRecords));
-        }
-      })
-      .catch(() => {
-        // Silent fail - backend unavailable, local data is already returned
-      });
-    
-    // Return local data immediately (INSTANT)
-    return deduplicatedLocal;
+    return Array.from(recordMap.values());
   } catch (error) {
-    console.error("❌ Error reading from LocalStorage:", error);
+    console.error("❌ Error reading attendance:", error);
     return [];
   }
 }
@@ -266,7 +247,7 @@ export function getSyncStatus(): { total: number; synced: number; pending: numbe
 }
 
 /**
- * Initialize sync listeners (simplified - no real-time sync needed)
+ * Initialize sync listeners (simplified - backend is source of truth)
  */
 export function initializeSyncListeners(onUpdate?: () => void): void {
   // Clean up any duplicate attendance records on startup
@@ -277,38 +258,44 @@ export function initializeSyncListeners(onUpdate?: () => void): void {
     }
   });
   
-  // Sync LocalStorage to backend when coming online
+  // On coming online, fetch from backend and update LocalStorage (backend is source of truth)
   window.addEventListener("online", async () => {
     try {
-      const localRecords = await getLocalAttendanceFromStorage();
-      if (localRecords.length > 0 && await isBackendAvailable()) {
-        console.log(`🔄 Syncing ${localRecords.length} local records to backend...`);
-        await saveAttendanceBatch(localRecords);
-        // LocalStorage is primary storage - don't clear it!
+      if (await isBackendAvailable()) {
+        console.log('🔄 Fetching latest data from backend...');
+        const backendRecords = await backendApi.getAttendance();
+        if (backendRecords && backendRecords.length > 0) {
+          // Update LocalStorage with backend data (backend is source of truth)
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(backendRecords));
+          console.log(`✅ Synced ${backendRecords.length} records from backend to LocalStorage`);
+        }
         if (onUpdate) {
           onUpdate();
         }
       }
     } catch (error) {
-      console.warn('⚠️ Failed to sync local records to backend:', error);
+      console.warn('⚠️ Failed to sync from backend:', error);
     }
   });
   
-  // Initial sync if online
+  // Initial sync - backend is source of truth
   if (navigator.onLine) {
     setTimeout(async () => {
       try {
-        const localRecords = await getLocalAttendanceFromStorage();
-        if (localRecords.length > 0 && await isBackendAvailable()) {
-          console.log(`🔄 Syncing ${localRecords.length} local records to backend...`);
-          await saveAttendanceBatch(localRecords);
-          // LocalStorage is primary storage - don't clear it!
+        if (await isBackendAvailable()) {
+          console.log('🔄 Initial sync: fetching latest data from backend...');
+          const backendRecords = await backendApi.getAttendance();
+          if (backendRecords && backendRecords.length >= 0) {
+            // Update LocalStorage with backend data (backend is source of truth)
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(backendRecords));
+            console.log(`✅ Initial sync: ${backendRecords.length} records from backend`);
+          }
           if (onUpdate) {
             onUpdate();
           }
         }
       } catch (error) {
-        console.warn('⚠️ Failed to sync local records to backend:', error);
+        console.warn('⚠️ Failed to sync from backend:', error);
       }
     }, 1000);
   }

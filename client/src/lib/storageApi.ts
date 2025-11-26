@@ -54,7 +54,10 @@ function getStudentsFromStorage(): Student[] {
 export async function getClasses(): Promise<Class[]> {
   try {
     if (await isBackendAvailable()) {
-      return await backendApi.getClasses();
+      const classes = await backendApi.getClasses();
+      // Update LocalStorage with backend data (backend is source of truth)
+      localStorage.setItem(CLASSES_KEY, JSON.stringify(classes));
+      return classes;
     }
   } catch (error) {
     console.warn('⚠️ Backend unavailable, using LocalStorage fallback');
@@ -144,7 +147,10 @@ export async function deleteClass(classId: string): Promise<boolean> {
 export async function getStudents(): Promise<Student[]> {
   try {
     if (await isBackendAvailable()) {
-      return await backendApi.getStudents();
+      const students = await backendApi.getStudents();
+      // Update LocalStorage with backend data (backend is source of truth)
+      localStorage.setItem(STUDENTS_KEY, JSON.stringify(students));
+      return students;
     }
   } catch (error) {
     console.warn('⚠️ Backend unavailable, using LocalStorage fallback');
@@ -157,7 +163,9 @@ export async function getStudents(): Promise<Student[]> {
 export async function getStudentsByClass(className: string): Promise<Student[]> {
   try {
     if (await isBackendAvailable()) {
-      return await backendApi.getStudentsByClass(className);
+      const students = await backendApi.getStudentsByClass(className);
+      // Note: We don't update full student storage here as this is filtered
+      return students;
     }
   } catch (error) {
     console.warn('⚠️ Backend unavailable, using LocalStorage fallback');
