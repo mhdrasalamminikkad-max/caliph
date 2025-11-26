@@ -102,12 +102,12 @@ export default function AttendanceEditor() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="searchPrayer">Prayer</Label>
-                <Select value={searchPrayer} onValueChange={setSearchPrayer}>
+                <Select value={searchPrayer || "all"} onValueChange={(value) => setSearchPrayer(value === "all" ? "" : value)}>
                   <SelectTrigger data-testid="select-search-prayer">
                     <SelectValue placeholder="All prayers" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All prayers</SelectItem>
+                    <SelectItem value="all">All prayers</SelectItem>
                     {prayers.map((prayer) => (
                       <SelectItem key={prayer} value={prayer}>
                         {prayer}
