@@ -20,6 +20,7 @@ export interface IStorage {
   getClass(id: string): Promise<Class | undefined>;
   createClass(classData: InsertClass): Promise<Class>;
   deleteClass(id: string): Promise<boolean>;
+  clearAllClasses(): Promise<number>;
   
   // Student methods
   getStudent(id: string): Promise<Student | undefined>;
@@ -28,6 +29,7 @@ export interface IStorage {
   createStudent(student: InsertStudent): Promise<Student>;
   updateStudent(id: string, data: Partial<InsertStudent>): Promise<Student | undefined>;
   deleteStudent(id: string): Promise<boolean>;
+  clearAllStudents(): Promise<number>;
   
   // Attendance methods
   getAttendance(date: string, prayer: string, className: string): Promise<Attendance[]>;
@@ -38,6 +40,9 @@ export interface IStorage {
   updateAttendance(id: string, data: Partial<InsertAttendance>): Promise<Attendance | undefined>;
   deleteAttendance(id: string): Promise<boolean>;
   clearAllAttendance(): Promise<number>;
+  
+  // Clear all data
+  clearAllData(): Promise<{ classesCleared: number; studentsCleared: number; attendanceCleared: number }>;
   
   // User methods
   getUsers(): Promise<User[]>;
@@ -423,6 +428,48 @@ export class MemStorage implements IStorage {
     this.saveData();
     console.log(`✅ Cleared ${count} attendance records`);
     return count;
+  }
+
+  async clearAllClasses(): Promise<number> {
+    const count = this.classes.size;
+    // Also clear students and attendance since they depend on classes
+    const studentCount = this.students.size;
+    const attendanceCount = this.attendance.size;
+    
+    this.classes.clear();
+    this.students.clear();
+    this.attendance.clear();
+    this.saveData();
+    
+    console.log(`✅ Cleared ${count} classes, ${studentCount} students, ${attendanceCount} attendance records`);
+    return count;
+  }
+
+  async clearAllStudents(): Promise<number> {
+    const count = this.students.size;
+    // Also clear attendance since it depends on students
+    const attendanceCount = this.attendance.size;
+    
+    this.students.clear();
+    this.attendance.clear();
+    this.saveData();
+    
+    console.log(`✅ Cleared ${count} students and ${attendanceCount} attendance records`);
+    return count;
+  }
+
+  async clearAllData(): Promise<{ classesCleared: number; studentsCleared: number; attendanceCleared: number }> {
+    const classesCleared = this.classes.size;
+    const studentsCleared = this.students.size;
+    const attendanceCleared = this.attendance.size;
+    
+    this.classes.clear();
+    this.students.clear();
+    this.attendance.clear();
+    this.saveData();
+    
+    console.log(`✅ Cleared all data: ${classesCleared} classes, ${studentsCleared} students, ${attendanceCleared} attendance records`);
+    return { classesCleared, studentsCleared, attendanceCleared };
   }
 
   // User methods

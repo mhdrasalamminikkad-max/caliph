@@ -47,8 +47,16 @@ export async function deleteStudent(studentId: string): Promise<boolean> {
 
 // ==================== Utils ====================
 
-export function clearAllData(): void {
-  storageApi.clearAllData();
+export async function clearAllData(token?: string): Promise<void> {
+  await storageApi.clearAllData(token);
+}
+
+export async function clearAllAttendance(token?: string): Promise<void> {
+  await storageApi.clearAllAttendance(token);
+}
+
+export function clearLocalStorageData(): void {
+  storageApi.clearLocalStorageData();
 }
 
 export async function removeDuplicateStudents(): Promise<number> {

@@ -132,6 +132,42 @@ export async function deleteAttendance(id: string): Promise<void> {
   });
 }
 
+export async function clearAllAttendance(token: string): Promise<{ count: number }> {
+  return apiFetch<{ count: number }>('/api/attendance', {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+}
+
+export async function clearAllClasses(token: string): Promise<{ count: number }> {
+  return apiFetch<{ count: number }>('/api/classes', {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+}
+
+export async function clearAllStudents(token: string): Promise<{ count: number }> {
+  return apiFetch<{ count: number }>('/api/students', {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+}
+
+export async function clearAllData(token: string): Promise<{ classesCleared: number; studentsCleared: number; attendanceCleared: number }> {
+  return apiFetch<{ classesCleared: number; studentsCleared: number; attendanceCleared: number }>('/api/data/all', {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+}
+
 // ==================== SUMMARY ====================
 
 export async function getSummary(filters?: {

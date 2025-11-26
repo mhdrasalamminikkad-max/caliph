@@ -235,6 +235,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clear all data (classes, students, attendance) - admin only
+  app.delete("/api/data/all", requireAdmin, async (_req, res) => {
+    try {
+      const result = await storage.clearAllData();
+      res.json({ 
+        message: "All data cleared successfully", 
+        ...result
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Clear all classes (admin only)
+  app.delete("/api/classes", requireAdmin, async (_req, res) => {
+    try {
+      const count = await storage.clearAllClasses();
+      res.json({ 
+        message: "All classes cleared successfully", 
+        count 
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Clear all students (admin only)
+  app.delete("/api/students", requireAdmin, async (_req, res) => {
+    try {
+      const count = await storage.clearAllStudents();
+      res.json({ 
+        message: "All students cleared successfully", 
+        count 
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Get attendance by date range
   app.get("/api/attendance/range", async (req, res) => {
     try {

@@ -102,18 +102,30 @@ export async function createClass(name: string): Promise<Class> {
 }
 
 export async function deleteClass(classId: string): Promise<boolean> {
+  // Get class name before deletion for LocalStorage cleanup
+  const classes = getClassesFromStorage();
+  const classToDelete = classes.find(c => c.id === classId);
+  
   try {
     if (await isBackendAvailable()) {
       await backendApi.deleteClass(classId);
+      // ALSO clear from LocalStorage to prevent re-sync
+      const updatedClasses = classes.filter(c => c.id !== classId);
+      localStorage.setItem(CLASSES_KEY, JSON.stringify(updatedClasses));
+      
+      // Also delete students in this class from LocalStorage
+      if (classToDelete) {
+        const students = getStudentsFromStorage();
+        const updatedStudents = students.filter(s => s.className !== classToDelete.name);
+        localStorage.setItem(STUDENTS_KEY, JSON.stringify(updatedStudents));
+      }
       return true;
     }
   } catch (error) {
-    console.warn('⚠️ Backend unavailable, using LocalStorage fallback');
+    console.warn('⚠️ Backend delete failed, using LocalStorage fallback:', error);
   }
   
   // Fallback to LocalStorage
-  const classes = getClassesFromStorage();
-  const classToDelete = classes.find(c => c.id === classId);
   const updatedClasses = classes.filter(c => c.id !== classId);
   localStorage.setItem(CLASSES_KEY, JSON.stringify(updatedClasses));
   
@@ -220,10 +232,14 @@ export async function deleteStudent(studentId: string): Promise<boolean> {
   try {
     if (await isBackendAvailable()) {
       await backendApi.deleteStudent(studentId);
+      // ALSO clear from LocalStorage to prevent re-sync
+      const students = getStudentsFromStorage();
+      const updatedStudents = students.filter(s => s.id !== studentId);
+      localStorage.setItem(STUDENTS_KEY, JSON.stringify(updatedStudents));
       return true;
     }
   } catch (error) {
-    console.warn('⚠️ Backend unavailable, using LocalStorage fallback');
+    console.warn('⚠️ Backend delete failed, using LocalStorage fallback:', error);
   }
   
   // Fallback to LocalStorage
@@ -236,7 +252,7 @@ export async function deleteStudent(studentId: string): Promise<boolean> {
 
 // ==================== Utils ====================
 
-export function clearAllData(): void {
+export function clearLocalStorageData(): void {
   localStorage.removeItem(CLASSES_KEY);
   localStorage.removeItem(STUDENTS_KEY);
   localStorage.removeItem(INITIALIZED_KEY);
@@ -246,5 +262,41 @@ export function clearAllData(): void {
   localStorage.removeItem('caliph_objectives');
   localStorage.removeItem('caliph_objective_records');
   console.log('🗑️ All local storage data cleared');
+}
+
+export async function clearAllData(token?: string): Promise<void> {
+  // Clear LocalStorage FIRST
+  clearLocalStorageData();
+  
+  // Then clear backend if token is provided
+  if (token) {
+    try {
+      if (await isBackendAvailable()) {
+        await backendApi.clearAllData(token);
+        console.log('🗑️ All backend data cleared');
+      }
+    } catch (error) {
+      console.warn('⚠️ Backend clear failed:', error);
+    }
+  }
+}
+
+export async function clearAllAttendance(token?: string): Promise<void> {
+  // Clear LocalStorage attendance
+  localStorage.removeItem('caliph_attendance_local');
+  localStorage.removeItem('caliph_attendance_sync_queue');
+  console.log('🗑️ LocalStorage attendance cleared');
+  
+  // Then clear backend if token is provided
+  if (token) {
+    try {
+      if (await isBackendAvailable()) {
+        await backendApi.clearAllAttendance(token);
+        console.log('🗑️ Backend attendance cleared');
+      }
+    } catch (error) {
+      console.warn('⚠️ Backend attendance clear failed:', error);
+    }
+  }
 }
 
