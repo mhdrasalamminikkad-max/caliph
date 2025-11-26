@@ -19,7 +19,20 @@ Caliph Attendance is a mobile-first web application designed for Islamic schools
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (November 25, 2025)
+## Recent Changes (November 26, 2025)
+
+### Performance Optimizations - Instant Loading
+- **Fixed**: Slow class/student loading replaced with LocalStorage-first approach
+- **Changed**: Single bulk query loads all students at once instead of N+1 per-class queries
+- **Pattern**: Read from LocalStorage instantly, background sync to backend (non-blocking)
+- **Caching**: React Query staleTime set to 30s to prevent unnecessary refetches
+
+### Edit Attendance Page Fix
+- **Fixed**: Blank page when clicking "Edit Attendance" in admin panel
+- **Cause**: Badge component expected capitalized status ("Present") but backend returned lowercase ("present")
+- **Solution**: Case-insensitive status comparison with display normalization
+
+## Previous Changes (November 25, 2025)
 
 ### PDF Format Update (Class Selection)
 - **Modified**: PDF download button in Class Selection now shows class-grouped format
