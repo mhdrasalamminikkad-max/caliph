@@ -52,19 +52,35 @@ function getStudentsFromStorage(): Student[] {
 // ==================== Classes ====================
 
 export async function getClasses(): Promise<Class[]> {
-  try {
-    if (await isBackendAvailable()) {
-      const classes = await backendApi.getClasses();
-      // Update LocalStorage with backend data (backend is source of truth)
-      localStorage.setItem(CLASSES_KEY, JSON.stringify(classes));
-      return classes;
+  // INSTANT: Return from LocalStorage first
+  const localClasses = getClassesFromStorage();
+  
+  // Background sync from backend (don't block UI)
+  (async () => {
+    try {
+      const backendClasses = await backendApi.getClasses();
+      if (backendClasses && backendClasses.length > 0) {
+        localStorage.setItem(CLASSES_KEY, JSON.stringify(backendClasses));
+      }
+    } catch (error) {
+      // Silently fail - local data is already returned
     }
-  } catch (error) {
-    console.warn('⚠️ Backend unavailable, using LocalStorage fallback');
+  })();
+  
+  // Return local data immediately (if empty, try backend once)
+  if (localClasses.length === 0) {
+    try {
+      const backendClasses = await backendApi.getClasses();
+      if (backendClasses) {
+        localStorage.setItem(CLASSES_KEY, JSON.stringify(backendClasses));
+        return backendClasses;
+      }
+    } catch (error) {
+      // Continue with empty array
+    }
   }
   
-  // Fallback to LocalStorage
-  return getClassesFromStorage();
+  return localClasses;
 }
 
 export async function createClass(name: string): Promise<Class> {
@@ -79,18 +95,9 @@ export async function createClass(name: string): Promise<Class> {
     id,
     name: trimmedName,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   };
   
-  try {
-    if (await isBackendAvailable()) {
-      return await backendApi.createClass(id, trimmedName);
-    }
-  } catch (error) {
-    console.warn('⚠️ Backend unavailable, using LocalStorage fallback');
-  }
-  
-  // Fallback to LocalStorage
+  // Get current classes from LocalStorage
   const classes = getClassesFromStorage();
   
   // Check for duplicate
@@ -98,8 +105,18 @@ export async function createClass(name: string): Promise<Class> {
     throw new Error(`Class name "${trimmedName}" already exists`);
   }
   
+  // INSTANT: Save to LocalStorage first
   classes.push(newClass);
   localStorage.setItem(CLASSES_KEY, JSON.stringify(classes));
+  
+  // Background sync to backend
+  (async () => {
+    try {
+      await backendApi.createClass(id, trimmedName);
+    } catch (error) {
+      console.warn('⚠️ Backend create failed, data preserved in LocalStorage');
+    }
+  })();
   
   return newClass;
 }
@@ -109,26 +126,7 @@ export async function deleteClass(classId: string): Promise<boolean> {
   const classes = getClassesFromStorage();
   const classToDelete = classes.find(c => c.id === classId);
   
-  try {
-    if (await isBackendAvailable()) {
-      await backendApi.deleteClass(classId);
-      // ALSO clear from LocalStorage to prevent re-sync
-      const updatedClasses = classes.filter(c => c.id !== classId);
-      localStorage.setItem(CLASSES_KEY, JSON.stringify(updatedClasses));
-      
-      // Also delete students in this class from LocalStorage
-      if (classToDelete) {
-        const students = getStudentsFromStorage();
-        const updatedStudents = students.filter(s => s.className !== classToDelete.name);
-        localStorage.setItem(STUDENTS_KEY, JSON.stringify(updatedStudents));
-      }
-      return true;
-    }
-  } catch (error) {
-    console.warn('⚠️ Backend delete failed, using LocalStorage fallback:', error);
-  }
-  
-  // Fallback to LocalStorage
+  // INSTANT: Delete from LocalStorage first
   const updatedClasses = classes.filter(c => c.id !== classId);
   localStorage.setItem(CLASSES_KEY, JSON.stringify(updatedClasses));
   
@@ -139,39 +137,54 @@ export async function deleteClass(classId: string): Promise<boolean> {
     localStorage.setItem(STUDENTS_KEY, JSON.stringify(updatedStudents));
   }
   
+  // Background sync to backend
+  (async () => {
+    try {
+      await backendApi.deleteClass(classId);
+    } catch (error) {
+      console.warn('⚠️ Backend delete failed');
+    }
+  })();
+  
   return true;
 }
 
 // ==================== Students ====================
 
 export async function getStudents(): Promise<Student[]> {
-  try {
-    if (await isBackendAvailable()) {
-      const students = await backendApi.getStudents();
-      // Update LocalStorage with backend data (backend is source of truth)
-      localStorage.setItem(STUDENTS_KEY, JSON.stringify(students));
-      return students;
+  // INSTANT: Return from LocalStorage first
+  const localStudents = getStudentsFromStorage();
+  
+  // Background sync from backend (don't block UI)
+  (async () => {
+    try {
+      const backendStudents = await backendApi.getStudents();
+      if (backendStudents && backendStudents.length > 0) {
+        localStorage.setItem(STUDENTS_KEY, JSON.stringify(backendStudents));
+      }
+    } catch (error) {
+      // Silently fail - local data is already returned
     }
-  } catch (error) {
-    console.warn('⚠️ Backend unavailable, using LocalStorage fallback');
+  })();
+  
+  // Return local data immediately (if empty, try backend once)
+  if (localStudents.length === 0) {
+    try {
+      const backendStudents = await backendApi.getStudents();
+      if (backendStudents) {
+        localStorage.setItem(STUDENTS_KEY, JSON.stringify(backendStudents));
+        return backendStudents;
+      }
+    } catch (error) {
+      // Continue with empty array
+    }
   }
   
-  // Fallback to LocalStorage
-  return getStudentsFromStorage();
+  return localStudents;
 }
 
 export async function getStudentsByClass(className: string): Promise<Student[]> {
-  try {
-    if (await isBackendAvailable()) {
-      const students = await backendApi.getStudentsByClass(className);
-      // Note: We don't update full student storage here as this is filtered
-      return students;
-    }
-  } catch (error) {
-    console.warn('⚠️ Backend unavailable, using LocalStorage fallback');
-  }
-  
-  // Fallback to LocalStorage
+  // INSTANT: Read from LocalStorage only (no backend check)
   const students = getStudentsFromStorage();
   return students.filter(s => s.className === className);
 }
@@ -195,15 +208,7 @@ export async function createStudent(name: string, className: string, rollNumber?
     className,
   };
   
-  try {
-    if (await isBackendAvailable()) {
-      return await backendApi.createStudent(id, trimmedName, className, rollNumber);
-    }
-  } catch (error) {
-    console.warn('⚠️ Backend unavailable, using LocalStorage fallback');
-  }
-  
-  // Fallback to LocalStorage
+  // Get current students from LocalStorage
   const students = getStudentsFromStorage();
   
   // Check for duplicate student in the same class
@@ -230,30 +235,36 @@ export async function createStudent(name: string, className: string, rollNumber?
     }
   }
   
+  // INSTANT: Save to LocalStorage first
   students.push(newStudent);
   localStorage.setItem(STUDENTS_KEY, JSON.stringify(students));
+  
+  // Background sync to backend
+  (async () => {
+    try {
+      await backendApi.createStudent(id, trimmedName, className, rollNumber);
+    } catch (error) {
+      console.warn('⚠️ Backend create failed, data preserved in LocalStorage');
+    }
+  })();
   
   return newStudent;
 }
 
 export async function deleteStudent(studentId: string): Promise<boolean> {
-  try {
-    if (await isBackendAvailable()) {
-      await backendApi.deleteStudent(studentId);
-      // ALSO clear from LocalStorage to prevent re-sync
-      const students = getStudentsFromStorage();
-      const updatedStudents = students.filter(s => s.id !== studentId);
-      localStorage.setItem(STUDENTS_KEY, JSON.stringify(updatedStudents));
-      return true;
-    }
-  } catch (error) {
-    console.warn('⚠️ Backend delete failed, using LocalStorage fallback:', error);
-  }
-  
-  // Fallback to LocalStorage
+  // INSTANT: Delete from LocalStorage first
   const students = getStudentsFromStorage();
   const updatedStudents = students.filter(s => s.id !== studentId);
   localStorage.setItem(STUDENTS_KEY, JSON.stringify(updatedStudents));
+  
+  // Background sync to backend
+  (async () => {
+    try {
+      await backendApi.deleteStudent(studentId);
+    } catch (error) {
+      console.warn('⚠️ Backend delete failed');
+    }
+  })();
   
   return true;
 }

@@ -158,8 +158,8 @@ export default function AttendanceEditor() {
                         <TableCell>{att.studentName}</TableCell>
                         <TableCell>{att.className}</TableCell>
                         <TableCell>
-                          <Badge variant={att.status === "Present" ? "default" : "destructive"}>
-                            {att.status}
+                          <Badge variant={att.status.toLowerCase() === "present" ? "default" : "destructive"}>
+                            {att.status.charAt(0).toUpperCase() + att.status.slice(1).toLowerCase()}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground">{att.reason || "-"}</TableCell>

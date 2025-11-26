@@ -33,35 +33,27 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
   const { data: classes = [], isLoading } = useQuery<Class[]>({
     queryKey: ["classes"],
     queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchClassesFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchClassesFromFirestore();
       const { getClasses } = await import("@/lib/offlineApi");
       return await getClasses();
     },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    staleTime: 30000,
   });
 
   const { data: classStudentsMap = {} } = useQuery<Record<string, any[]>>({
-    queryKey: ["class-students", classes],
+    queryKey: ["all-students"],
     queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchStudentsFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchStudentsFromFirestore();
-      const { getStudentsByClass } = await import("@/lib/offlineApi");
+      const { getStudents } = await import("@/lib/offlineApi");
+      const allStudents = await getStudents();
       const studentsMap: Record<string, any[]> = {};
-      for (const cls of classes) {
-        const students = await getStudentsByClass(cls.name);
-        studentsMap[cls.name] = students;
-      }
+      allStudents.forEach(student => {
+        if (!studentsMap[student.className]) {
+          studentsMap[student.className] = [];
+        }
+        studentsMap[student.className].push(student);
+      });
       return studentsMap;
     },
-    enabled: classes.length > 0,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    staleTime: 30000,
   });
 
   const { data: allAttendance = [] } = useQuery<AttendanceRecord[]>({
@@ -122,7 +114,7 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       
       // Also invalidate to trigger refetch (but cache is already updated above)
       queryClient.invalidateQueries({ queryKey: ["classes"] });
-      queryClient.invalidateQueries({ queryKey: ["class-students"] });
+      queryClient.invalidateQueries({ queryKey: ["all-students"] });
       
       // TODO: Replace with backend API call when implementing new backend
       // const { fetchClassesFromFirestore } = await import("@/lib/firebaseSync");
@@ -177,7 +169,7 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       
       // Invalidate all related queries
       await queryClient.invalidateQueries({ queryKey: ["classes"] });
-      await queryClient.invalidateQueries({ queryKey: ["class-students"] });
+      await queryClient.invalidateQueries({ queryKey: ["all-students"] });
       await queryClient.invalidateQueries({ queryKey: ["students"] });
       
       // Force immediate refetch
