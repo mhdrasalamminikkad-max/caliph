@@ -19,7 +19,19 @@ Caliph Attendance is a mobile-first web application designed for Islamic schools
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (November 26, 2025)
+## Recent Changes (November 27, 2025)
+
+### Instant Loading Architecture (Complete)
+- **Implementation**: Full instant loading across all components with localStorage-first approach
+- **Bootstrap Cache**: `bootstrapCache.ts` pre-loads React Query cache synchronously before first render
+- **API Endpoint**: `/api/bootstrap` returns all classes + students in single request
+- **Components Updated**: ClassSelection, AttendanceList, ClassOverview, StudentReport, SummaryPage
+- **Query Keys**: All three query keys synced: `['classes']`, `['students']`, `['students', className]`
+- **Pattern**: `initialData` from localStorage with `staleTime: Infinity` for instant display
+- **Background Sync**: Non-blocking server sync updates cache after UI renders
+- **Console Output**: "Pre-loaded 2 classes" and "Pre-loaded 47 students" on app start
+
+## Previous Changes (November 26, 2025)
 
 ### Performance Optimizations - Instant Loading
 - **Fixed**: Slow class/student loading replaced with LocalStorage-first approach
