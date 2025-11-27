@@ -4,26 +4,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Trash2, AlertTriangle } from "lucide-react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { clearAllAttendanceData } from "@/lib/hybridStorage";
 
 export default function ClearAttendanceData() {
   const { toast } = useToast();
   const [confirmStep, setConfirmStep] = useState(0);
 
   const clearAttendanceMutation = useMutation({
-    mutationFn: () => apiRequest("/api/attendance", "DELETE"),
-    onSuccess: (data: any) => {
+    mutationFn: async () => {
+      // Use the proper clear function that handles both backend and LocalStorage
+      // and sets the clear flag to prevent sync restoration
+      return await clearAllAttendanceData();
+    },
+    onSuccess: (data: { count: number; clearedAt: number }) => {
+      // Invalidate all attendance-related queries to force a fresh fetch
       queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
+      queryClient.removeQueries({ queryKey: ["/api/attendance"] });
+      
       toast({
         title: "Success",
-        description: `${data.count} attendance records have been cleared. Classes and students remain intact.`,
+        description: `${data.count} attendance records have been cleared. Classes and students remain intact. Data will not be restored from sync.`,
       });
       setConfirmStep(0);
-      
-      // Also clear local storage attendance data
-      localStorage.removeItem('caliph_attendance_local');
-      localStorage.removeItem('caliph_attendance_sync_queue');
     },
     onError: (error: any) => {
       toast({

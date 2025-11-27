@@ -33,6 +33,74 @@ let backendAvailableCache: boolean | null = null;
 let lastBackendCheck = 0;
 const BACKEND_CHECK_INTERVAL = 30000; // Check every 30 seconds
 
+// Keys for persisting clear state (local fallback)
+const CLEAR_TIMESTAMP_KEY = 'caliph_attendance_cleared_at';
+
+// Cache for server's cleared timestamp
+let serverClearedAtCache: number | null = null;
+let lastServerClearedAtCheck = 0;
+const SERVER_CLEARED_CHECK_INTERVAL = 10000; // Check every 10 seconds
+
+// Fetch the server's cleared timestamp (source of truth for multi-client)
+async function getServerClearedAt(): Promise<number> {
+  const now = Date.now();
+  if (serverClearedAtCache !== null && (now - lastServerClearedAtCheck) < SERVER_CLEARED_CHECK_INTERVAL) {
+    return serverClearedAtCache;
+  }
+  
+  try {
+    const apiUrl = getApiBaseUrl();
+    const response = await fetch(`${apiUrl}/api/attendance/cleared-at`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+      },
+      credentials: 'include',
+      signal: AbortSignal.timeout(2000),
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      serverClearedAtCache = data.clearedAt || 0;
+      lastServerClearedAtCheck = now;
+      return serverClearedAtCache ?? 0;
+    }
+  } catch (error) {
+    console.warn('⚠️ Could not fetch server cleared timestamp:', error);
+  }
+  
+  // Fall back to local timestamp
+  return getLocalClearTimestamp();
+}
+
+// Get persisted clear timestamp from localStorage (local fallback)
+function getLocalClearTimestamp(): number {
+  const stored = localStorage.getItem(CLEAR_TIMESTAMP_KEY);
+  return stored ? parseInt(stored, 10) : 0;
+}
+
+// Set persisted clear timestamp locally
+function setClearTimestamp(timestamp: number): void {
+  if (timestamp > 0) {
+    localStorage.setItem(CLEAR_TIMESTAMP_KEY, timestamp.toString());
+  } else {
+    localStorage.removeItem(CLEAR_TIMESTAMP_KEY);
+  }
+  // Also update the cache
+  serverClearedAtCache = timestamp;
+  lastServerClearedAtCheck = Date.now();
+}
+
+// Get effective clear timestamp (prefers server, falls back to local)
+// This is the authoritative timestamp - records older than this should ALWAYS be filtered
+async function getEffectiveClearTimestamp(): Promise<number> {
+  const serverTime = await getServerClearedAt();
+  const localTime = getLocalClearTimestamp();
+  // Use the more recent of the two
+  return Math.max(serverTime, localTime);
+}
+
 // Get API base URL (use window.location.origin for Replit compatibility)
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
@@ -159,6 +227,7 @@ export async function saveAttendanceBatch(records: AttendanceRecord[]): Promise<
 
 /**
  * Get all attendance records - merge local and backend when available
+ * Respects the clear flag to prevent restoration of cleared data
  */
 export async function getLocalAttendance(): Promise<AttendanceRecord[]> {
   try {
@@ -166,6 +235,53 @@ export async function getLocalAttendance(): Promise<AttendanceRecord[]> {
     const stored = localStorage.getItem(STORAGE_KEY);
     const localRecords: AttendanceRecord[] = stored ? JSON.parse(stored) : [];
     
+    // ALWAYS filter records older than the clear timestamp (authoritative, no time limit)
+    const clearTime = await getEffectiveClearTimestamp();
+    if (clearTime > 0) {
+      const filteredLocal = localRecords.filter(record => {
+        const recordTime = new Date(record.timestamp || 0).getTime();
+        return recordTime > clearTime;
+      });
+      
+      // If backend is available, also filter backend records
+      if (await isBackendAvailable()) {
+        try {
+          const backendRecords = await backendApi.getAttendance();
+          if (backendRecords) {
+            const filteredBackend = backendRecords.filter(record => {
+              const recordTime = new Date(record.timestamp || 0).getTime();
+              return recordTime > clearTime;
+            });
+            
+            // Merge filtered records
+            const mergeMap = new Map<string, AttendanceRecord>();
+            filteredBackend.forEach(record => {
+              const key = `${record.studentId}-${record.date}-${record.prayer}`;
+              mergeMap.set(key, record);
+            });
+            filteredLocal.forEach(record => {
+              const key = `${record.studentId}-${record.date}-${record.prayer}`;
+              const existing = mergeMap.get(key);
+              const localTime = new Date(record.timestamp || 0).getTime();
+              const existingTime = existing ? new Date(existing.timestamp || 0).getTime() : 0;
+              if (!existing || localTime > existingTime) {
+                mergeMap.set(key, record);
+              }
+            });
+            
+            const mergedRecords = Array.from(mergeMap.values());
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedRecords));
+            return mergedRecords;
+          }
+        } catch (error) {
+          console.warn('⚠️ Backend fetch failed, using filtered LocalStorage:', error);
+        }
+      }
+      
+      return filteredLocal;
+    }
+    
+    // Normal flow (no recent clear)
     // If backend is available, merge to get the most accurate data
     if (await isBackendAvailable()) {
       try {
@@ -456,6 +572,114 @@ export async function deleteAttendanceRecord(id: string): Promise<void> {
   const updatedRecords = records.filter(r => r.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedRecords));
   console.log(`✅ Deleted attendance record from LocalStorage: ${id}`);
+}
+
+/**
+ * Clear ALL attendance data from both LocalStorage and backend
+ * Sets a persisted flag IMMEDIATELY to prevent sync from restoring old data
+ * Throws error if backend clear fails to alert the user
+ */
+export async function clearAllAttendanceData(): Promise<{ count: number; clearedAt: number }> {
+  const clearTime = Date.now();
+  
+  console.log('🗑️ Clearing all attendance data...');
+  
+  // SET PROTECTION FLAG IMMEDIATELY - before any async operations
+  // This prevents any sync from restoring data while we're clearing
+  setClearTimestamp(clearTime);
+  console.log('🛡️ Protection flag set to prevent data restoration');
+  
+  // Clear LocalStorage immediately
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem('caliph_attendance_sync_queue');
+  console.log('✅ LocalStorage attendance cleared');
+  
+  // Clear backend - this MUST succeed for the clear to be complete
+  let count = 0;
+  let serverClearedAt = clearTime;
+  const apiUrl = getApiBaseUrl();
+  const token = localStorage.getItem('auth_token');
+  
+  try {
+    const response = await fetch(`${apiUrl}/api/attendance`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      // Backend failed - throw error to alert user, but keep protection flag active
+      const errorText = await response.text().catch(() => 'Unknown error');
+      throw new Error(`Failed to clear attendance from server (${response.status}): ${errorText}`);
+    }
+    
+    const data = await response.json();
+    count = data.count || 0;
+    serverClearedAt = data.clearedAt || clearTime;
+    
+    // Update local timestamp with server's authoritative timestamp
+    setClearTimestamp(serverClearedAt);
+    
+    console.log(`✅ Backend attendance cleared: ${count} records at ${serverClearedAt}`);
+  } catch (error) {
+    // Keep protection flag active if backend clear fails
+    console.error('❌ Backend clear failed - protection flag remains active:', error);
+    throw error;
+  }
+  
+  // Verify the deletion by fetching from backend (with cache busting and auth headers)
+  try {
+    const verifyResponse = await fetch(`${apiUrl}/api/attendance?_t=${Date.now()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+      cache: 'no-store',
+    });
+    
+    // Handle both 200 (with data) and 304 (not modified - treat as empty if we just cleared)
+    if (verifyResponse.ok) {
+      const remaining = await verifyResponse.json();
+      if (Array.isArray(remaining) && remaining.length > 0) {
+        console.warn(`⚠️ ${remaining.length} records still exist after clear - keeping protection flag`);
+        // Keep protection flag since some data wasn't cleared
+      } else {
+        console.log('✅ Verified: Backend is empty after clear');
+        // Backend is empty - we can safely rely on the server timestamp now
+      }
+    } else if (verifyResponse.status === 304) {
+      // 304 Not Modified - this shouldn't happen with cache-busting, but treat as success
+      console.log('✅ Verified (304): Assuming backend is empty after clear');
+    } else {
+      // Non-success status - keep protection flag
+      console.warn(`⚠️ Verification failed (${verifyResponse.status}) - keeping protection flag`);
+    }
+  } catch (verifyError) {
+    console.warn('⚠️ Could not verify clear, keeping protection flag:', verifyError);
+    // Keep protection flag as fallback
+  }
+  
+  // Reset caches to force fresh checks
+  backendAvailableCache = null;
+  lastBackendCheck = 0;
+  serverClearedAtCache = serverClearedAt;
+  lastServerClearedAtCheck = Date.now();
+  
+  return { count, clearedAt: serverClearedAt };
+}
+
+/**
+ * Reset the clear flag (call this if needed to restore normal sync behavior)
+ */
+export function resetClearFlag(): void {
+  setClearTimestamp(0);
 }
 
 // Export sync functions for compatibility (no-op)

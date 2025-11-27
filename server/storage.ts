@@ -12,6 +12,7 @@ interface StorageData {
   students: Record<string, Student>;
   attendance: Record<string, Attendance>;
   users: Record<string, User>;
+  lastAttendanceClearedAt?: number; // Timestamp of when attendance was last cleared
 }
 
 export interface IStorage {
@@ -39,7 +40,8 @@ export interface IStorage {
   getStudentAttendance(studentId: string): Promise<Attendance[]>;
   updateAttendance(id: string, data: Partial<InsertAttendance>): Promise<Attendance | undefined>;
   deleteAttendance(id: string): Promise<boolean>;
-  clearAllAttendance(): Promise<number>;
+  clearAllAttendance(): Promise<{ count: number; clearedAt: number }>;
+  getLastAttendanceClearedAt(): Promise<number>;
   
   // Clear all data
   clearAllData(): Promise<{ classesCleared: number; studentsCleared: number; attendanceCleared: number }>;
@@ -59,6 +61,7 @@ export class MemStorage implements IStorage {
   private students: Map<string, Student>;
   private attendance: Map<string, Attendance>;
   private users: Map<string, User>;
+  private lastAttendanceClearedAt: number = 0;
 
   constructor() {
     this.classes = new Map();
@@ -107,6 +110,9 @@ export class MemStorage implements IStorage {
           { ...user, createdAt: user.createdAt ? new Date(user.createdAt) : new Date() }
         ]);
         this.users = new Map(userEntries as [string, User][]);
+        
+        // Load last attendance cleared timestamp
+        this.lastAttendanceClearedAt = data.lastAttendanceClearedAt || 0;
         
         console.log(`✅ Loaded ${this.classes.size} classes, ${this.students.size} students, ${this.attendance.size} attendance records, ${this.users.size} users`);
       } else {
@@ -163,6 +169,7 @@ export class MemStorage implements IStorage {
         students: Object.fromEntries(this.students),
         attendance: Object.fromEntries(this.attendance),
         users: Object.fromEntries(this.users),
+        lastAttendanceClearedAt: this.lastAttendanceClearedAt,
       };
       
       // Write to temporary file first, then rename (atomic operation)
@@ -422,12 +429,18 @@ export class MemStorage implements IStorage {
     return deleted;
   }
 
-  async clearAllAttendance(): Promise<number> {
+  async clearAllAttendance(): Promise<{ count: number; clearedAt: number }> {
     const count = this.attendance.size;
+    const clearedAt = Date.now();
     this.attendance.clear();
+    this.lastAttendanceClearedAt = clearedAt;
     this.saveData();
-    console.log(`✅ Cleared ${count} attendance records`);
-    return count;
+    console.log(`✅ Cleared ${count} attendance records at ${clearedAt}`);
+    return { count, clearedAt };
+  }
+
+  async getLastAttendanceClearedAt(): Promise<number> {
+    return this.lastAttendanceClearedAt;
   }
 
   async clearAllClasses(): Promise<number> {

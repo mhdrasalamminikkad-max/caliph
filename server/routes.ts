@@ -225,11 +225,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Clear all attendance data (admin only)
   app.delete("/api/attendance", requireAdmin, async (_req, res) => {
     try {
-      const count = await storage.clearAllAttendance();
+      const result = await storage.clearAllAttendance();
       res.json({ 
         message: "All attendance records cleared successfully", 
-        count 
+        count: result.count,
+        clearedAt: result.clearedAt
       });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get the timestamp of when attendance was last cleared (for sync protection)
+  app.get("/api/attendance/cleared-at", async (_req, res) => {
+    try {
+      const clearedAt = await storage.getLastAttendanceClearedAt();
+      res.json({ clearedAt });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
