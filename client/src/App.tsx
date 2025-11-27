@@ -22,6 +22,10 @@ import { initializeMobileStorage } from "@/lib/mobileStorage";
 import { initializeSeedData } from "@/lib/offlineApi";
 import { connectWebSocket, disconnectWebSocket, isWebSocketConnected } from "@/lib/websocketClient";
 import { useToast } from "@/hooks/use-toast";
+import { preloadCacheFromLocalStorage, backgroundSyncFromServer } from "@/lib/bootstrapCache";
+
+// INSTANT LOADING: Pre-populate React Query cache from localStorage BEFORE any components render
+preloadCacheFromLocalStorage();
 
 type View = 
   | { type: "home" }
@@ -103,6 +107,11 @@ function AppContent() {
     // Initialize mobile storage cleanup and quota checking
     initializeMobileStorage();
     
+    // INSTANT LOADING: Trigger background sync from server (non-blocking)
+    backgroundSyncFromServer().catch(err => {
+      console.warn("⚠️ Background sync failed (non-critical):", err);
+    });
+    
     // Initialize backend sync and storage
     const updateCallback = () => {
       // This callback is triggered when data updates
@@ -113,6 +122,7 @@ function AppContent() {
       queryClient.invalidateQueries({ queryKey: ["classes"] });
       queryClient.invalidateQueries({ queryKey: ["class-students"] });
       queryClient.invalidateQueries({ queryKey: ["other-attendance"] });
+      queryClient.invalidateQueries({ queryKey: ["all-students"] });
     };
     
     // Initialize seed data (only if empty)

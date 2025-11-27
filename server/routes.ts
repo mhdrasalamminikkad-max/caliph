@@ -5,6 +5,36 @@ import { insertClassSchema, insertStudentSchema, insertAttendanceSchema, insertU
 import { requireAdmin } from "./middleware/auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Bootstrap endpoint - returns ALL data in one request for instant loading
+  app.get("/api/bootstrap", async (_req, res) => {
+    try {
+      const [classes, students, clearedAt] = await Promise.all([
+        storage.getClasses(),
+        storage.getAllStudents(),
+        storage.getLastAttendanceClearedAt()
+      ]);
+      
+      // Group students by class for easy access
+      const studentsByClass: Record<string, typeof students> = {};
+      students.forEach(student => {
+        if (!studentsByClass[student.className]) {
+          studentsByClass[student.className] = [];
+        }
+        studentsByClass[student.className].push(student);
+      });
+      
+      res.json({
+        classes,
+        students,
+        studentsByClass,
+        clearedAt,
+        timestamp: Date.now()
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Login route (public)
   app.post("/api/auth/login", async (req, res) => {
     try {

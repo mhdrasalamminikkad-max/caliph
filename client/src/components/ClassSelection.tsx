@@ -1,4 +1,4 @@
-import { Prayer, type Class } from "@shared/schema";
+import { Prayer, type Class, type Student } from "@shared/schema";
 import ClassCard from "./ClassCard";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -6,10 +6,38 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { getClasses, createClass, deleteClass, getStudentsByClass } from "@/lib/offlineApi";
+import { getClasses, createClass, deleteClass, getStudents } from "@/lib/offlineApi";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { AttendanceRecord } from "@/lib/backendApi";
+
+// Helper to get classes from localStorage synchronously for instant loading
+function getLocalClasses(): Class[] {
+  try {
+    const stored = localStorage.getItem('caliph_classes');
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+// Helper to get students grouped by class from localStorage synchronously
+function getLocalStudentsByClass(): Record<string, Student[]> {
+  try {
+    const stored = localStorage.getItem('caliph_students');
+    const students: Student[] = stored ? JSON.parse(stored) : [];
+    const grouped: Record<string, Student[]> = {};
+    students.forEach(student => {
+      if (!grouped[student.className]) {
+        grouped[student.className] = [];
+      }
+      grouped[student.className].push(student);
+    });
+    return grouped;
+  } catch {
+    return {};
+  }
+}
 
 interface ClassSelectionProps {
   prayer: Prayer;
@@ -30,21 +58,20 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
     day: "numeric" 
   });
 
+  // INSTANT LOADING: Use initialData from localStorage, then background sync
   const { data: classes = [], isLoading } = useQuery<Class[]>({
     queryKey: ["classes"],
-    queryFn: async () => {
-      const { getClasses } = await import("@/lib/offlineApi");
-      return await getClasses();
-    },
-    staleTime: 30000,
+    queryFn: getClasses,
+    initialData: getLocalClasses,
+    staleTime: Infinity,
   });
 
-  const { data: classStudentsMap = {} } = useQuery<Record<string, any[]>>({
+  // INSTANT LOADING: Use initialData from localStorage, then background sync
+  const { data: classStudentsMap = {} } = useQuery<Record<string, Student[]>>({
     queryKey: ["all-students"],
     queryFn: async () => {
-      const { getStudents } = await import("@/lib/offlineApi");
       const allStudents = await getStudents();
-      const studentsMap: Record<string, any[]> = {};
+      const studentsMap: Record<string, Student[]> = {};
       allStudents.forEach(student => {
         if (!studentsMap[student.className]) {
           studentsMap[student.className] = [];
@@ -53,7 +80,8 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       });
       return studentsMap;
     },
-    staleTime: 30000,
+    initialData: getLocalStudentsByClass,
+    staleTime: Infinity,
   });
 
   const { data: allAttendance = [] } = useQuery<AttendanceRecord[]>({
@@ -102,26 +130,17 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       setNewClassName("");
       setDialogOpen(false);
       
-      // Get fresh classes from backend/LocalStorage (includes the newly created one)
-      const { getClasses } = await import("@/lib/offlineApi");
-      const currentClasses = await getClasses();
+      // INSTANT: Update cache directly from localStorage (already updated by createClass)
+      const currentClasses = getLocalClasses();
+      const currentStudents = getLocalStudentsByClass();
       console.log(`📋 Classes after create: ${currentClasses.length} total`);
-      console.log(`   Classes: ${currentClasses.map(c => c.name).join(', ')}`);
       
-      // CRITICAL: Directly update the query cache with fresh data from LocalStorage
-      // This ensures the UI shows the new class IMMEDIATELY without waiting for refetch
+      // CRITICAL: Directly update the query cache for instant UI update
       queryClient.setQueryData(["classes"], currentClasses);
-      
-      // Also invalidate to trigger refetch (but cache is already updated above)
-      queryClient.invalidateQueries({ queryKey: ["classes"] });
-      queryClient.invalidateQueries({ queryKey: ["all-students"] });
-      
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchClassesFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchClassesFromFirestore();
+      queryClient.setQueryData(["all-students"], currentStudents);
       
       toast({
-        title: "✅ Success",
+        title: "Success",
         description: "Class created! It will sync to other devices automatically.",
       });
     },
@@ -160,23 +179,16 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       return { deleted, className };
     },
     onSuccess: async () => {
-      // Refresh classes immediately
-      const { getClasses } = await import("@/lib/offlineApi");
-      const currentClasses = await getClasses();
+      // INSTANT: Update cache directly from localStorage (already updated by deleteClass)
+      const currentClasses = getLocalClasses();
+      const currentStudents = getLocalStudentsByClass();
       
-      // CRITICAL: Directly update the query cache with fresh data
+      // CRITICAL: Directly update the query cache for instant UI update
       queryClient.setQueryData(["classes"], currentClasses);
-      
-      // Invalidate all related queries
-      await queryClient.invalidateQueries({ queryKey: ["classes"] });
-      await queryClient.invalidateQueries({ queryKey: ["all-students"] });
-      await queryClient.invalidateQueries({ queryKey: ["students"] });
-      
-      // Force immediate refetch
-      await queryClient.refetchQueries({ queryKey: ["classes"] });
+      queryClient.setQueryData(["all-students"], currentStudents);
       
       toast({
-        title: "✅ Success",
+        title: "Success",
         description: "Class deleted successfully",
       });
     },
