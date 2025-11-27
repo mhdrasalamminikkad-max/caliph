@@ -10,6 +10,35 @@ import { saveAttendanceBatch, getSyncStatus } from "@/lib/hybridStorage";
 import { getStudentsByClass, createStudent, deleteStudent } from "@/lib/offlineApi";
 import BulkStudentImport from "./BulkStudentImport";
 
+// INSTANT LOADING: Get students for a class from localStorage synchronously
+function getLocalStudentsByClass(targetClassName: string): Student[] {
+  try {
+    const stored = localStorage.getItem('caliph_students');
+    const students: Student[] = stored ? JSON.parse(stored) : [];
+    return students.filter(s => s.className === targetClassName);
+  } catch {
+    return [];
+  }
+}
+
+// INSTANT LOADING: Get all students grouped by class from localStorage
+function getAllLocalStudentsByClass(): Record<string, Student[]> {
+  try {
+    const stored = localStorage.getItem('caliph_students');
+    const students: Student[] = stored ? JSON.parse(stored) : [];
+    const grouped: Record<string, Student[]> = {};
+    students.forEach(student => {
+      if (!grouped[student.className]) {
+        grouped[student.className] = [];
+      }
+      grouped[student.className].push(student);
+    });
+    return grouped;
+  } catch {
+    return {};
+  }
+}
+
 interface AttendanceListProps {
   prayer: Prayer;
   className: string;
@@ -33,21 +62,17 @@ export default function AttendanceList({ prayer, className, onBack }: Attendance
 
   const dateForApi = new Date().toISOString().split('T')[0];
 
+  // INSTANT LOADING: Use initialData from localStorage
   const { data: students = [], isLoading } = useQuery<Student[]>({
     queryKey: ["students", className],
     queryFn: async () => {
       console.log(`📚 Fetching students for class: "${className}"`);
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchStudentsFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchStudentsFromFirestore();
-      const { getStudentsByClass } = await import("@/lib/offlineApi");
       const studentsList = await getStudentsByClass(className);
-      console.log(`📚 Found ${studentsList.length} student(s) for class "${className}":`, studentsList.map(s => s.name).join(', '));
+      console.log(`📚 Found ${studentsList.length} student(s) for class "${className}"`);
       return studentsList;
     },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    initialData: () => getLocalStudentsByClass(className),
+    staleTime: Infinity,
   });
 
   // Automatically mark all students as present when they load
@@ -75,23 +100,21 @@ export default function AttendanceList({ prayer, className, onBack }: Attendance
       return newStudent;
     },
     onSuccess: async () => {
-      // Get fresh students from backend/LocalStorage (includes the newly created one)
-      const { getStudentsByClass } = await import("@/lib/offlineApi");
-      const currentStudents = await getStudentsByClass(className);
+      // INSTANT: Update cache directly from localStorage (already updated by createStudent)
+      const currentStudents = getLocalStudentsByClass(className);
       
-      // CRITICAL: Directly update the query cache with fresh data
-      // This ensures the UI shows the new student IMMEDIATELY without waiting for refetch
+      // CRITICAL: Directly update the query cache for instant UI update
       queryClient.setQueryData(["students", className], currentStudents);
       
-      // Invalidate queries to trigger refetch
-      await queryClient.invalidateQueries({ queryKey: ["students", className] });
-      await queryClient.invalidateQueries({ queryKey: ["class-students"] });
+      // Also update the all-students cache
+      const allStudentsGrouped = getAllLocalStudentsByClass();
+      queryClient.setQueryData(["all-students"], allStudentsGrouped);
       
       setNewStudentName("");
       setNewStudentRollNumber("");
       setDialogOpen(false);
       toast({
-        title: "✅ Success",
+        title: "Success",
         description: "Student added! It will sync to other devices automatically.",
       });
     },
@@ -109,41 +132,30 @@ export default function AttendanceList({ prayer, className, onBack }: Attendance
       console.log(`🔄 Deleting student with ID: ${studentId}`);
       
       // Get student name before deletion for logging
-      const { getStudentsByClass } = await import("@/lib/offlineApi");
-      const students = await getStudentsByClass(className);
-      const studentToDelete = students.find(s => s.id === studentId);
+      const localStudents = getLocalStudentsByClass(className);
+      const studentToDelete = localStudents.find(s => s.id === studentId);
       const studentName = studentToDelete?.name || "Unknown";
       
       // Delete locally first
-      const deleted = deleteStudent(studentId);
+      const deleted = await deleteStudent(studentId);
       if (!deleted) {
         throw new Error("Failed to delete student locally");
       }
       
       console.log(`✅ Student "${studentName}" deleted locally`);
-      
-      // TODO: Replace with backend API call when implementing new backend
-      // const { deleteStudentFromFirestore } = await import("@/lib/firebaseSync");
-      // await deleteStudentFromFirestore(studentId);
-      
       return deleted;
     },
     onSuccess: async () => {
-      // Refresh students immediately
-      const { getStudentsByClass } = await import("@/lib/offlineApi");
-      const currentStudents = await getStudentsByClass(className);
+      // INSTANT: Update cache directly from localStorage (already updated by deleteStudent)
+      const currentStudents = getLocalStudentsByClass(className);
       queryClient.setQueryData(["students", className], currentStudents);
       
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["students", className] });
-      queryClient.invalidateQueries({ queryKey: ["class-students"] });
-      
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchStudentsFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchStudentsFromFirestore();
+      // Also update the all-students cache
+      const allStudentsGrouped = getAllLocalStudentsByClass();
+      queryClient.setQueryData(["all-students"], allStudentsGrouped);
       
       toast({
-        title: "✅ Success",
+        title: "Success",
         description: "Student deleted successfully",
       });
     },

@@ -6,6 +6,19 @@ import { Input } from "@/components/ui/input";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { sanitizeForPDF, sanitizeForPDFTable } from "@/lib/pdfSanitizer";
+import { getStudents } from "@/lib/offlineApi";
+import { getLocalAttendance } from "@/lib/hybridStorage";
+import type { Student } from "@shared/schema";
+
+// INSTANT LOADING: Get students from localStorage synchronously
+function getLocalStudents(): Student[] {
+  try {
+    const stored = localStorage.getItem('caliph_students');
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
 
 interface StudentReportProps {
   onBack: () => void;
@@ -15,34 +28,18 @@ export default function StudentReport({ onBack }: StudentReportProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
+  // INSTANT LOADING: Use initialData from localStorage
   const { data: students = [], isLoading: studentsLoading } = useQuery({
     queryKey: ["students"],
-    queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchStudentsFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchStudentsFromFirestore();
-      const { getStudents } = await import("@/lib/offlineApi");
-      return getStudents();
-    },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    queryFn: getStudents,
+    initialData: getLocalStudents,
+    staleTime: Infinity,
   });
 
   const { data: attendance = [] } = useQuery({
     queryKey: ["attendance"],
-    queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchFromFirestore } = await import("@/lib/hybridStorage");
-      // const data = await fetchFromFirestore();
-      const { getLocalAttendance } = await import("@/lib/hybridStorage");
-      const data = getLocalAttendance();
-      console.log("📚 Loaded attendance records for StudentReport:", data.length);
-      return data;
-    },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    queryFn: getLocalAttendance,
+    staleTime: 30000,
   });
 
   const filteredStudents = students.filter((student: any) =>

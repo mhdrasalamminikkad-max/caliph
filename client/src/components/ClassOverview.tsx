@@ -5,6 +5,29 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { sanitizeForPDF } from "@/lib/pdfSanitizer";
 import type { AttendanceRecord } from "@/lib/hybridStorage";
+import { getClasses, getStudents } from "@/lib/offlineApi";
+import { getLocalAttendance } from "@/lib/hybridStorage";
+import type { Class, Student } from "@shared/schema";
+
+// INSTANT LOADING: Get classes from localStorage synchronously
+function getLocalClasses(): Class[] {
+  try {
+    const stored = localStorage.getItem('caliph_classes');
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+// INSTANT LOADING: Get students from localStorage synchronously
+function getLocalStudents(): Student[] {
+  try {
+    const stored = localStorage.getItem('caliph_students');
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
 
 interface ClassOverviewProps {
   onBack: () => void;
@@ -12,46 +35,26 @@ interface ClassOverviewProps {
 }
 
 export default function ClassOverview({ onBack, onClassClick }: ClassOverviewProps) {
+  // INSTANT LOADING: Use initialData from localStorage
   const { data: classes = [], isLoading: classesLoading } = useQuery({
     queryKey: ["classes"],
-    queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchClassesFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchClassesFromFirestore();
-      const { getClasses } = await import("@/lib/offlineApi");
-      return getClasses();
-    },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    queryFn: getClasses,
+    initialData: getLocalClasses,
+    staleTime: Infinity,
   });
 
+  // INSTANT LOADING: Use initialData from localStorage
   const { data: students = [], isLoading: studentsLoading } = useQuery({
     queryKey: ["students"],
-    queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchStudentsFromFirestore } = await import("@/lib/firebaseSync");
-      // await fetchStudentsFromFirestore();
-      const { getStudents } = await import("@/lib/offlineApi");
-      return getStudents();
-    },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    queryFn: getStudents,
+    initialData: getLocalStudents,
+    staleTime: Infinity,
   });
 
   const { data: attendance = [], isLoading: attendanceLoading } = useQuery({
     queryKey: ["attendance"],
-    queryFn: async () => {
-      // TODO: Replace with backend API call when implementing new backend
-      // const { fetchFromFirestore } = await import("@/lib/hybridStorage");
-      // return await fetchFromFirestore();
-      const { getLocalAttendance } = await import("@/lib/hybridStorage");
-      return getLocalAttendance();
-    },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data - INSTANT SYNC
+    queryFn: getLocalAttendance,
+    staleTime: 30000,
   });
 
   const getClassStats = (className: string) => {

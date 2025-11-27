@@ -8,6 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { sanitizeForPDF, sanitizeForPDFTable } from "@/lib/pdfSanitizer";
+import { getClasses, getStudents } from "@/lib/offlineApi";
+import { getLocalAttendance } from "@/lib/hybridStorage";
 import type { AttendanceRecord } from "@/lib/backendApi";
 import {
   Dialog,
@@ -16,6 +18,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+// INSTANT LOADING: Get classes from localStorage synchronously
+function getLocalClasses(): Class[] {
+  try {
+    const stored = localStorage.getItem('caliph_classes');
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+// INSTANT LOADING: Get students from localStorage synchronously
+function getLocalStudents(): Student[] {
+  try {
+    const stored = localStorage.getItem('caliph_students');
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
 
 interface SummaryPageProps {
   onBack: () => void;
@@ -61,41 +83,32 @@ export default function SummaryPage({ onBack }: SummaryPageProps) {
 
   const { startDate, endDate } = getDateRange();
 
+  // INSTANT LOADING: Use initialData from localStorage
   const { data: classes = [] } = useQuery<Class[]>({
     queryKey: ["classes"],
-    queryFn: async () => {
-      const { getClasses } = await import("@/lib/backendApi");
-      return getClasses();
-    },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0,
+    queryFn: getClasses,
+    initialData: getLocalClasses,
+    staleTime: Infinity,
   });
 
+  // INSTANT LOADING: Use initialData from localStorage
   const { data: students = [] } = useQuery<Student[]>({
     queryKey: ["students"],
-    queryFn: async () => {
-      const { getStudents } = await import("@/lib/backendApi");
-      return getStudents();
-    },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0,
+    queryFn: getStudents,
+    initialData: getLocalStudents,
+    staleTime: Infinity,
   });
 
   const { data: allAttendance = [] } = useQuery<AttendanceRecord[]>({
     queryKey: ["attendance", startDate, endDate],
     queryFn: async () => {
-      const { getAttendance } = await import("@/lib/backendApi");
-      const records = await getAttendance();
-      return records.filter(record => {
+      const records = await getLocalAttendance();
+      return records.filter((record: AttendanceRecord) => {
         const recordDate = new Date(record.date).toISOString().split("T")[0];
         return recordDate >= startDate && recordDate <= endDate;
       });
     },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 30000,
   });
 
   // Calculate prayer-wise summary
