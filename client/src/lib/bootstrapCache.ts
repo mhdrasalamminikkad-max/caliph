@@ -77,6 +77,8 @@ export function preloadCacheFromLocalStorage(): void {
   }
   
   if (students.length > 0) {
+    // Set the global students query key (used by StudentReport, SummaryPage, etc.)
+    queryClient.setQueryData(['students'], students);
     queryClient.setQueryData(['all-students'], studentsByClass);
     console.log(`⚡ Pre-loaded ${students.length} students`);
   }
@@ -113,6 +115,8 @@ export async function backgroundSyncFromServer(): Promise<void> {
     
     // Update React Query cache with fresh data
     queryClient.setQueryData(['classes'], data.classes);
+    // Set the global students query key (used by StudentReport, SummaryPage, etc.)
+    queryClient.setQueryData(['students'], data.students);
     queryClient.setQueryData(['all-students'], data.studentsByClass);
     
     // Update individual class student queries
