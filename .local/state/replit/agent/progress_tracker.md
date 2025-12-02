@@ -74,3 +74,7 @@
     - Added sortStudentsByRollNumber helper function in storageApi.ts
     - Applied sorting to both getStudents() and getStudentsByClass() functions
     - Students with roll numbers sorted first, then alphabetically by name for students without roll numbers
+[x] 69. Configure app for deployment - autoscale deployment configured - COMPLETE
+    - Build command: npm run build
+    - Run command: npm run start
+    - App ready for publishing
