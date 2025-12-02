@@ -1,0 +1,2 @@
+Appwrite: classes(id,name), students(id,name,rollNum,className), attendance(id,studId,studName,className,prayer,date,status,reason,timestamp), summary(id,type). String 255 except rollNum/prayer/type=50, date=10, status=20, reason=500.
+
