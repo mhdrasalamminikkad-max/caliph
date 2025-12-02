@@ -89,3 +89,7 @@
     - Added Android platform (android folder created)
     - Created BUILD_APK.md with build instructions
     - App package ID: com.caliph.attendance
+[x] 72. Configure Android app to connect to Railway server - COMPLETE
+    - Railway URL: https://caliph-attendance-api-production-1bf0.up.railway.app
+    - App loads directly from Railway server
+    - Updates happen automatically without rebuilding the app

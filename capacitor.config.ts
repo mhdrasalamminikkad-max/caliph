@@ -6,9 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'dist/public',
   server: {
     androidScheme: 'https',
-    // IMPORTANT: Replace with your Railway URL to load from server
-    // url: 'https://your-app.up.railway.app',
-    // cleartext: true
+    url: 'https://caliph-attendance-api-production-1bf0.up.railway.app',
+    cleartext: false
   },
   android: {
     backgroundColor: '#16a34a'
