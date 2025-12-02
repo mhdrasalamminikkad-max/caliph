@@ -70,3 +70,7 @@
 [x] 65. Workflow restarted and running successfully on port 5000 - COMPLETE
 [x] 66. Screenshot verification: Login page displays correctly with Caliph Attendance branding - COMPLETE
 [x] 67. ALL PROGRESS TRACKER ITEMS MARKED AS COMPLETE - IMPORT MIGRATION SUCCESSFUL
+[x] 68. Fix student ordering issue - students now sort by roll number numerically (1, 2, 3... not 1, 10, 11, 2) - COMPLETE
+    - Added sortStudentsByRollNumber helper function in storageApi.ts
+    - Applied sorting to both getStudents() and getStudentsByClass() functions
+    - Students with roll numbers sorted first, then alphabetically by name for students without roll numbers

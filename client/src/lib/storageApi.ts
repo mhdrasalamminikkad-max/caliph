@@ -151,6 +151,36 @@ export async function deleteClass(classId: string): Promise<boolean> {
 
 // ==================== Students ====================
 
+// Helper function to sort students by roll number numerically
+function sortStudentsByRollNumber(students: Student[]): Student[] {
+  return [...students].sort((a, b) => {
+    const rollA = a.rollNumber;
+    const rollB = b.rollNumber;
+    
+    // If both have roll numbers, sort numerically
+    if (rollA && rollB) {
+      // Extract numeric part from roll number
+      const numA = parseInt(rollA.replace(/\D/g, ''), 10) || 0;
+      const numB = parseInt(rollB.replace(/\D/g, ''), 10) || 0;
+      
+      // If both are numeric, compare numerically
+      if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
+        return numA - numB;
+      }
+      
+      // Otherwise compare as strings
+      return rollA.localeCompare(rollB, undefined, { numeric: true });
+    }
+    
+    // Students with roll numbers come before those without
+    if (rollA && !rollB) return -1;
+    if (!rollA && rollB) return 1;
+    
+    // If neither has roll number, sort alphabetically by name
+    return a.name.localeCompare(b.name);
+  });
+}
+
 export async function getStudents(): Promise<Student[]> {
   // INSTANT: Return from LocalStorage first
   const localStudents = getStudentsFromStorage();
@@ -173,20 +203,22 @@ export async function getStudents(): Promise<Student[]> {
       const backendStudents = await backendApi.getStudents();
       if (backendStudents) {
         localStorage.setItem(STUDENTS_KEY, JSON.stringify(backendStudents));
-        return backendStudents;
+        return sortStudentsByRollNumber(backendStudents);
       }
     } catch (error) {
       // Continue with empty array
     }
   }
   
-  return localStudents;
+  return sortStudentsByRollNumber(localStudents);
 }
 
 export async function getStudentsByClass(className: string): Promise<Student[]> {
   // INSTANT: Read from LocalStorage only (no backend check)
   const students = getStudentsFromStorage();
-  return students.filter(s => s.className === className);
+  const classStudents = students.filter(s => s.className === className);
+  // Sort by roll number numerically
+  return sortStudentsByRollNumber(classStudents);
 }
 
 export async function createStudent(name: string, className: string, rollNumber?: string): Promise<Student> {
