@@ -83,3 +83,9 @@
     - Added Apple mobile web app meta tags for iOS support
     - Added theme color and description
     - App can now be installed on phones like a native app
+[x] 71. Wrap app with Capacitor for native Android builds - COMPLETE
+    - Installed @capacitor/core, @capacitor/cli, @capacitor/android
+    - Created capacitor.config.ts with app configuration
+    - Added Android platform (android folder created)
+    - Created BUILD_APK.md with build instructions
+    - App package ID: com.caliph.attendance
