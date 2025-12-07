@@ -97,3 +97,8 @@
 [x] 74. Workflow restarted and running successfully on port 5000 - COMPLETE
 [x] 75. Screenshot verification: Login page displays correctly with Caliph Attendance branding - COMPLETE
 [x] 76. ALL PROGRESS TRACKER ITEMS MARKED AS COMPLETE - IMPORT MIGRATION SUCCESSFUL
+[x] 77. Change "All students are present" to "All present" in WhatsApp messages - COMPLETE
+[x] 78. Change "All students are present" to "All present" in PDFs - COMPLETE
+[x] 79. Add absence reason to WhatsApp messages (shows "Student Name - Reason" if reason exists) - COMPLETE
+[x] 80. Add absence reason to PDFs (shows "Student Name - Reason" if reason exists) - COMPLETE
+[x] 81. Workflow restarted and verified running successfully - COMPLETE

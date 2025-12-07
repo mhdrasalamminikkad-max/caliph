@@ -244,13 +244,16 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       }
     );
 
-    // Group absent students by class
-    const absentByClass: Record<string, string[]> = {};
+    // Group absent students by class with their reasons
+    const absentByClass: Record<string, { name: string; reason?: string | null }[]> = {};
     absentRecords.forEach(record => {
       if (!absentByClass[record.className]) {
         absentByClass[record.className] = [];
       }
-      absentByClass[record.className].push(record.studentName);
+      absentByClass[record.className].push({ 
+        name: record.studentName, 
+        reason: record.reason 
+      });
     });
 
     // Sort class names alphabetically
@@ -268,10 +271,14 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       
       const absentStudents = absentByClass[className];
       if (!absentStudents || absentStudents.length === 0) {
-        message += `All students are present\n`;
+        message += `All present\n`;
       } else {
-        absentStudents.forEach((studentName) => {
-          message += `${studentName}\n`;
+        absentStudents.forEach((student) => {
+          if (student.reason && student.reason.trim()) {
+            message += `${student.name} - ${student.reason}\n`;
+          } else {
+            message += `${student.name}\n`;
+          }
         });
       }
     });
@@ -307,13 +314,16 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       }
     );
 
-    // Group absent students by class
-    const absentByClass: Record<string, string[]> = {};
+    // Group absent students by class with their reasons
+    const absentByClass: Record<string, { name: string; reason?: string | null }[]> = {};
     absentRecords.forEach(record => {
       if (!absentByClass[record.className]) {
         absentByClass[record.className] = [];
       }
-      absentByClass[record.className].push(record.studentName);
+      absentByClass[record.className].push({ 
+        name: record.studentName, 
+        reason: record.reason 
+      });
     });
 
     // Sort class names alphabetically
@@ -354,18 +364,21 @@ export default function ClassSelection({ prayer, onClassSelect, onBack, title }:
       doc.text(className, 20, yPosition);
       yPosition += 7;
 
-      // Either "All students are present" or list of absent students
+      // Either "All present" or list of absent students with reasons
       if (!absentStudents || absentStudents.length === 0) {
-        doc.text("All students are present", 20, yPosition);
+        doc.text("All present", 20, yPosition);
         yPosition += 6;
       } else {
-        absentStudents.forEach((studentName) => {
+        absentStudents.forEach((student) => {
           // Check if we need a new page
           if (yPosition > 270) {
             doc.addPage();
             yPosition = 20;
           }
-          doc.text(studentName, 20, yPosition);
+          const displayText = student.reason && student.reason.trim() 
+            ? `${student.name} - ${student.reason}` 
+            : student.name;
+          doc.text(displayText, 20, yPosition);
           yPosition += 6;
         });
       }
